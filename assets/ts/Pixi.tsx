@@ -5,6 +5,15 @@ interface IMainState {}
 
 import * as PIXI from "pixi.js";
 
+/*
+(async () => {
+  const n = await fetch(a);
+  console.log(n);
+})();
+
+console.log(a);
+*/
+
 export default class Pixi extends React.Component<IMainProps, IMainState> {
   app: PIXI.Application;
   gameCanvas: HTMLDivElement;
@@ -49,7 +58,7 @@ export default class Pixi extends React.Component<IMainProps, IMainState> {
 
         var y = hh * i;
 
-        graphics.lineStyle(4, 0xff3300, 1);
+        graphics.lineStyle(1, 0x0000ff, 1);
 
         graphics.beginFill(0x66ccff);
         graphics.drawRect(0, y, 100, hh);

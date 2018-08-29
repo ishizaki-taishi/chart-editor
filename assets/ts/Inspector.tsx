@@ -15,6 +15,24 @@ class Timeline {
   render() {}
 }
 
+/**
+ * HotReload に対応した setInterval
+ * @param symbol
+ * @param callback
+ * @param ms
+ */
+function setInterval2(
+  symbol: string,
+  callback: (...args: any[]) => void,
+  ms: number
+) {
+  if ((window as any)[symbol]) {
+    clearInterval((window as any)[symbol]);
+  }
+
+  (window as any)[symbol] = setInterval(callback, ms);
+}
+
 export default class Inspector extends React.Component<IMainProps, IMainState> {
   gameCanvas: HTMLDivElement;
 
@@ -25,33 +43,48 @@ export default class Inspector extends React.Component<IMainProps, IMainState> {
 
     console.log(this.props.target);
 
-    const gui: GUI = new GUI({ width: size * (1 / scale), autoPlace: false });
+    const gui: GUI = new GUI({ autoPlace: false });
 
-    gui.domElement.style.transform = `scale(${scale})`;
-    gui.domElement.style.marginLeft = `${(size - size * (1 / scale)) / 2}px`;
+    //gui.updateDisplay();
 
     let obj = {
       message: "Hello World",
       displayOutline: false,
       maxSize: 6.0,
-      speed: 5,
+      scale: 5,
       aaa: "[1, 2, 3]"
     };
 
     gui.domElement.querySelector(".close-button").remove();
 
-    console.log(Object.keys(obj));
-
     for (const key of Object.keys(obj)) {
-      gui.add(obj, key);
+      var n = gui.add(obj, key);
+      n.onChange(a => {
+        if (key === "scale") {
+          scale = a;
+        }
+        //  console.log(key, a);
+      });
     }
 
     console.log(gui);
     (window as any).GUI = GUI;
 
-    setInterval(() => {
-      // console.log(obj);
-    }, 1000);
+    setInterval2(
+      "sym",
+      () => {
+        const w = gui.domElement.offsetWidth;
+        const h = gui.domElement.offsetHeight;
+        gui.domElement.style.transform = `scale(${scale})`;
+
+        gui.width = size * (1 / scale);
+
+        gui.domElement.style.marginLeft = `${(w * scale - w) / 2}`;
+        gui.domElement.style.marginTop = `${(h * scale - h) / 2}`;
+        gui.domElement.style.marginBottom = `${(h * scale - h) / 2}`;
+      },
+      100
+    );
 
     this.gameCanvas.appendChild(gui.domElement);
   }

@@ -60,6 +60,8 @@ const styles = (theme: Theme) =>
 
 interface Props extends WithStyles<typeof styles> {}
 
+import Menu from "./Menu";
+
 class Application extends React.Component<Props, {}> {
   render() {
     console.log(this.props.classes.paper);
@@ -83,7 +85,8 @@ class Application extends React.Component<Props, {}> {
             anchor="left"
           >
             left drawer
-            <Inspector />
+            <Inspector target={{ a: 0, b: "b" }} />
+            inspector bottom
           </Drawer>
           <main
             className={classes.content}
@@ -92,10 +95,7 @@ class Application extends React.Component<Props, {}> {
             <div className={classes.toolbar} />
 
             <div style={{ padding: "1rem" }}>
-              form area
-              <Button variant="contained" color="primary">
-                Hello World
-              </Button>
+              <Menu />
             </div>
 
             <div style={{ flex: 1, display: "flex" }}>
