@@ -58,52 +58,61 @@ const styles = (theme: Theme) =>
     }
   });
 
-interface Props extends WithStyles<typeof styles> {}
+import { Editor } from "./Store";
+
+interface Props extends WithStyles<typeof styles> {
+  editor?: Editor;
+}
 
 import Menu from "./Menu";
+import { Provider, inject, observer } from "mobx-react";
+
+import stores from "./Store";
+import { observable } from "mobx";
 
 class Application extends React.Component<Props, {}> {
   render() {
-    console.log(this.props.classes.paper);
     const { classes } = this.props;
 
     return (
-      <div style={{ flexGrow: 1 }}>
-        <div className={classes.appFrame}>
-          <AppBar
-            position="absolute"
-            className={classNames(classes.appBar, classes[`appBar-left`])}
-          >
-            <Toolbar>toolbar</Toolbar>
-          </AppBar>
+      <Provider {...stores}>
+        <div style={{ flexGrow: 1 }}>
+          <div className={classes.appFrame}>
+            <AppBar
+              position="absolute"
+              className={classNames(classes.appBar, classes[`appBar-left`])}
+            >
+              <Toolbar>aa</Toolbar>
+            </AppBar>
 
-          <Drawer
-            variant="permanent"
-            classes={{
-              paper: classes.drawerPaper
-            }}
-            anchor="left"
-          >
-            left drawer
-            <Inspector target={{ a: 0, b: "b" }} />
-            inspector bottom
-          </Drawer>
-          <main
-            className={classes.content}
-            style={{ display: "flex", flexDirection: "column" }}
-          >
-            <div className={classes.toolbar} />
+            <Drawer
+              variant="permanent"
+              classes={{
+                paper: classes.drawerPaper
+              }}
+              anchor="left"
+            >
+              left drawer
+              <Inspector target={{ a: 0, b: "b" }} />
+              inspector bottom
+            </Drawer>
+            <main
+              className={classes.content}
+              style={{ display: "flex", flexDirection: "column" }}
+            >
+              <div className={classes.toolbar} />
 
-            <div style={{ padding: "1rem" }}>
-              <Menu />
-            </div>
+              <div style={{ padding: "1rem" }}>
+                <Menu />
+              </div>
 
-            <div style={{ flex: 1, display: "flex" }}>
-              <Pixi />
-            </div>
-          </main>
+              <div style={{ flex: 1, display: "flex" }}>
+                <Pixi />
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
+      </Provider>
     );
   }
 }

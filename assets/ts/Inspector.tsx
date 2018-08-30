@@ -29,12 +29,11 @@ function setInterval2(
   if ((window as any)[symbol]) {
     clearInterval((window as any)[symbol]);
   }
-
   (window as any)[symbol] = setInterval(callback, ms);
 }
 
 export default class Inspector extends React.Component<IMainProps, IMainState> {
-  gameCanvas: HTMLDivElement;
+  gameCanvas?: HTMLDivElement;
 
   componentDidMount() {
     var size = config.sidebarWidth;
@@ -55,11 +54,11 @@ export default class Inspector extends React.Component<IMainProps, IMainState> {
       aaa: "[1, 2, 3]"
     };
 
-    gui.domElement.querySelector(".close-button").remove();
+    gui.domElement.querySelector(".close-button")!.remove();
 
     for (const key of Object.keys(obj)) {
       var n = gui.add(obj, key);
-      n.onChange(a => {
+      n.onChange((a: any) => {
         if (key === "scale") {
           scale = a;
         }
@@ -86,7 +85,7 @@ export default class Inspector extends React.Component<IMainProps, IMainState> {
       100
     );
 
-    this.gameCanvas.appendChild(gui.domElement);
+    this.gameCanvas!.appendChild(gui.domElement);
   }
 
   componentWillUnmount() {}
@@ -96,7 +95,7 @@ export default class Inspector extends React.Component<IMainProps, IMainState> {
     return (
       <div
         ref={thisDiv => {
-          component.gameCanvas = thisDiv;
+          component.gameCanvas = thisDiv!;
         }}
       />
     );

@@ -1,3 +1,4 @@
 dist/
 .cache/
+assets/audio/
 node_modules/
