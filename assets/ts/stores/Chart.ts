@@ -9,13 +9,7 @@ export default class Chart implements IStore {
   readonly audio: Howl;
 
   @observable
-  timer = 0;
-
-  @observable
   audioBuffer?: AudioBuffer;
-
-  @action
-  inc = () => (this.timer += 1);
 
   @action
   setAudioBuffer(ab: AudioBuffer) {
@@ -23,10 +17,6 @@ export default class Chart implements IStore {
   }
 
   constructor(src: string) {
-    setInterval(() => {
-      this.inc();
-    }, 1000);
-
     this.audio = new Howl({ src: src });
 
     if ((window as any).ps) (window as any).ps.stop();

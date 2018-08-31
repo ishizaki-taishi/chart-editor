@@ -1,4 +1,3 @@
-import { Howl } from "howler";
 import { action, observable } from "mobx";
 
 import Chart from "./stores/Chart";
@@ -8,7 +7,7 @@ interface IAudio {
   key: string;
   value: string;
 }
-import HotReload from "./HotReload";
+
 import EditorSetting from "./stores/EditorSetting";
 
 export class Editor implements IStore {
@@ -18,11 +17,17 @@ export class Editor implements IStore {
   @observable
   setting?: EditorSetting;
 
-  readonly audios: IAudio[];
+  @observable
+  audios?: IAudio[];
 
   @action
   test() {
     this.setting = new EditorSetting();
+  }
+
+  @action
+  updateAudios(audios: IAudio[]) {
+    this.audios = audios;
   }
 
   constructor() {
@@ -30,40 +35,38 @@ export class Editor implements IStore {
 
     this.test();
 
-    const audios = require("../audio/*.wav");
+    const audios = {}; //require("../audio/*.wav");
 
-    this.audios = Object.entries(audios).map(
-      ([key, value]) =>
-        ({
-          key,
-          value
-        } as IAudio)
-    );
+    (async () => {
+      const res = await fetch("http://localhost:3000");
+      const t = await res.text();
+
+      const n = new DOMParser().parseFromString(t, "text/html");
+
+      const p = Array.from(n.querySelectorAll("a"));
+
+      console.log(p);
+
+      this.updateAudios(
+        p.map((p: any) => ({
+          key: p.textContent,
+          value: "http://localhost:3000/" + p.textContent
+        }))
+      );
+    })();
   }
 
   @action
   setAudio(audioKey: string) {
-    const audio = this.audios.find(audio => audio.key == audioKey)!;
+    const audio = this.audios!.find(audio => audio.key == audioKey)!;
+
+    if (audio == null) return;
 
     if (this.currentChart) this.currentChart.audio.stop();
 
     this.currentChart = new Chart(audio.value);
 
     console.log("SetAudio", audio);
-  }
-
-  private loadAudios() {
-    /*
-    console.log(sound);
-    const decodeAudioData2: Function = ((window as any).decodeAudioData2 =
-      (window as any).decodeAudioData2 || Howler.ctx.decodeAudioData);
-    if ((window as any).playingSound) {
-      ((window as any).playingSound as Howl).stop();
-    }
-    (window as any).playingSound = sound;
-    sound.play();
-    */
-    // console.warn(sound);
   }
 }
 

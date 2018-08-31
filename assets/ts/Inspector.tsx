@@ -5,8 +5,6 @@ interface IMainProps {
 }
 interface IMainState {}
 
-import * as PIXI from "pixi.js";
-
 import { GUI } from "dat-gui";
 
 import config from "./config";
@@ -66,7 +64,6 @@ export default class Inspector extends React.Component<IMainProps, IMainState> {
       });
     }
 
-    console.log(gui);
     (window as any).GUI = GUI;
 
     setInterval2(

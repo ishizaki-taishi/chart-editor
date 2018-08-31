@@ -5,23 +5,14 @@ import { Editor } from "./Store";
 interface IMainProps {
   editor?: Editor;
 }
-interface IMainState {}
 
 import * as PIXI from "pixi.js";
 
 import { observer, inject } from "mobx-react";
 
-/*
-(async () => {
-  const n = await fetch(a);
-  console.log(n);
-})();
-console.log(a);
-*/
-
 @inject("editor")
 @observer
-export default class Pixi extends React.Component<IMainProps, IMainState> {
+export default class Pixi extends React.Component<IMainProps, {}> {
   private app?: PIXI.Application;
   private gameCanvas?: HTMLDivElement;
 
@@ -49,8 +40,6 @@ export default class Pixi extends React.Component<IMainProps, IMainState> {
 
     app.stage.addChild(graphics);
 
-    // app.stage.on("pointertap", onClick);
-
     app.stage.x = 0;
     app.stage.y = 0;
 
@@ -68,9 +57,6 @@ export default class Pixi extends React.Component<IMainProps, IMainState> {
 
       graphics.x = 0;
       graphics.y = 0;
-
-      // app.view.width = app.view.clientWidth;
-      // app.view.height = app.view.clientHeight;
     });
 
     this.app.start();
@@ -84,9 +70,8 @@ export default class Pixi extends React.Component<IMainProps, IMainState> {
    * canvas を再描画する
    */
   private renderCanvas() {
-    console.log("re:render pixi canvas");
-
     if (!this.app) return;
+    console.log("re:render pixi canvas");
 
     const w = this.app!.renderer.width;
     const h = this.app!.renderer.height;
@@ -96,9 +81,9 @@ export default class Pixi extends React.Component<IMainProps, IMainState> {
     graphics.clear();
 
     // 縦に何個小節を配置するか
-    var hC = 3;
+    var hC = this.props.editor!.setting!.verticalLaneCount;
 
-    var wC = 10;
+    var wC = 5;
 
     const padding = 20;
 
@@ -106,11 +91,17 @@ export default class Pixi extends React.Component<IMainProps, IMainState> {
 
     const unitTime = (60 / bpm) * 4;
 
-    graphics.children.forEach(g => g.destroy());
+    while (graphics.children[0]) graphics.removeChild(graphics.children[0]);
+
+    (window as any).g = graphics;
 
     const laneWidth = this.props.editor!.setting!.laneWidth;
 
     let index = 0;
+
+    const channel = this.renderedAudioBuffer
+      ? this.renderedAudioBuffer.getChannelData(0)
+      : null;
 
     for (var $x = 0; $x < wC; ++$x) {
       for (var i = hC - 1; i >= 0; --i) {
@@ -124,13 +115,52 @@ export default class Pixi extends React.Component<IMainProps, IMainState> {
         graphics.beginFill(0x333333);
         graphics.drawRect(x, y, laneWidth, hh);
 
-        console.log(index);
+        if (this.renderedAudioBuffer) {
+          // TODO: ステレオ判定
+          // if (ab.numberOfChannels > 1)
 
-        let text = new PIXI.Text(index++ + "", {
+          // 小節の開始時刻、終了時刻
+          var b = unitTime * index;
+          var e = unitTime * (index + 1);
+
+          (window as any).ch = channel;
+
+          // 小節の開始、終了サンプルインデックス
+          var bb = (b / this.renderedAudioBuffer.duration) * channel!.length;
+          var ee = (e / this.renderedAudioBuffer.duration) * channel!.length;
+
+          for (var ii = 0; ii < hh; ++ii) {
+            //var p1 = i - 1;
+            //var p2 = i;
+
+            // 描画 Y 座標の開始、終了サンプルインデックス
+            var bbb = bb + ((ee - bb) / hh) * (hh - 1 - ii);
+            var eee = bb + ((ee - bb) / hh) * (hh - 1 - ii + 1);
+
+            const renderSample = 3;
+
+            for (var j = 0; j < renderSample; ++j) {
+              var value = channel![
+                Math.floor(bbb + ((eee - bbb) / renderSample) * j)
+              ];
+
+              // -1 ~ 1 を 0 ~ 1 に正規化する
+              // value = value * 0.5 + 0.5; //) / 2;
+
+              graphics
+                .lineStyle(1, 0x00ff00)
+                .moveTo(x + laneWidth / 2 - (value * laneWidth) / 2, y + ii)
+                .lineTo(x + laneWidth / 2 + (value * laneWidth) / 2, y + ii);
+            }
+          }
+        }
+
+        let text = new PIXI.Text(index + "", {
           fontFamily: "Arial",
           fontSize: 20,
           fill: 0xffffff,
           align: "center",
+          // textBaseline: "middle",
           dropShadow: true,
           dropShadowBlur: 8,
           dropShadowColor: "#000000",
@@ -143,37 +173,8 @@ export default class Pixi extends React.Component<IMainProps, IMainState> {
         graphics.addChild(text);
 
         graphics.endFill();
-      }
-    }
 
-    if (this.renderedAudioBuffer) {
-      // TODO: ステレオ判定
-      // if (ab.numberOfChannels > 1)
-
-      var channel = this.renderedAudioBuffer.getChannelData(0);
-
-      for (var i = 0; i < h; ++i) {
-        var p1 = i - 1;
-        var p2 = i;
-
-        var p11 = Math.floor((channel.length / h) * p1);
-        var p22 = Math.floor((channel.length / h) * p2);
-
-        // var range = channel.slice(p11, p22);
-
-        for (var j = 0; j < 10; ++j) {
-          var value = channel[Math.floor(p11 + ((p22 - p11) / 10) * j)];
-
-          graphics
-            .lineStyle(1, 0x00ff00)
-            .moveTo(w / 2 - value * laneWidth, i)
-            .lineTo(w / 2 + value * laneWidth, i);
-        }
-
-        //          console.log(range);
-
-        //          console.log(value);
-        //console.log(p22 - p11);
+        ++index;
       }
     }
   }
