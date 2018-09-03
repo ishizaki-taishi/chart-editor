@@ -6,18 +6,22 @@ import HotReload from "../HotReload";
 interface IStore {}
 
 export default class Chart implements IStore {
-  readonly audio: Howl;
+  audio?: Howl;
 
   @observable
   audioBuffer?: AudioBuffer;
+
+  @observable
+  guid: number;
 
   @action
   setAudioBuffer(ab: AudioBuffer) {
     this.audioBuffer = ab;
   }
 
-  constructor(src: string) {
-    this.audio = new Howl({ src: src });
+  @action
+  setAudio(source: string) {
+    this.audio = new Howl({ src: source });
 
     if ((window as any).ps) (window as any).ps.stop();
     (window as any).ps = this.audio;
@@ -41,6 +45,16 @@ export default class Chart implements IStore {
     );
 
     this.audio.volume(0.5);
-    this.audio.play();
+    // this.audio.play();
+  }
+
+  constructor(src: string) {
+    this.guid = Math.random();
+
+    if (src === "") {
+      return;
+    }
+
+    this.setAudio(src);
   }
 }

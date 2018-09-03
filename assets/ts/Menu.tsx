@@ -13,33 +13,55 @@ import { observer, inject } from "mobx-react";
 import { configure } from "mobx";
 
 configure({
-  enforceActions: "always"
+  enforceActions: "observed"
 });
 
 import { Editor } from "./Store";
 
-interface Props {
+import { withStyles, WithStyles, createStyles } from "@material-ui/core";
+import { Theme } from "@material-ui/core/styles/createMuiTheme";
+
+import AddIcon from "@material-ui/icons/Add";
+
+const styles = (theme: Theme) =>
+  createStyles({
+    fab: {
+      position: "absolute",
+      top: theme.spacing.unit * 8,
+      right: theme.spacing.unit * 2,
+      zIndex: 1
+    }
+  });
+
+interface Props extends WithStyles<typeof styles> {
   editor?: Editor;
 }
 
 @inject("editor")
 @observer
-export default class Menu extends React.Component<Props, {}> {
-  state = {
-    currentAudio: ""
-  };
+class Menu extends React.Component<Props, {}> {
+  state = {};
 
   handleChange = (event: any) => {
     this.setState({ [event.target.name]: event.target.value });
   };
 
   handleAudioChange = (event: any) => {
-    this.handleChange(event);
+    // this.handleChange(event);
+
+    //this.props.editor!.currentChart!.setAudio()
+
     this.props.editor!.setAudio(event.target.value);
   };
 
   render() {
+    if (!this.props.editor || !this.props.editor!.currentChart) {
+      return <div />;
+    }
+
     const editor = this.props.editor!;
+
+    const classes = this.props.classes;
 
     const renderMenu = () => {
       if (!this.props.editor) return <div />;
@@ -63,10 +85,18 @@ export default class Menu extends React.Component<Props, {}> {
           <PlayArrow />
         </Button>
 
+        {"GUID: " + editor
+          ? editor.currentChart
+            ? editor.currentChart!.guid
+            : ""
+          : ""}
+
         <FormControl style={{ width: "10rem" }}>
           <InputLabel htmlFor="audio">Audio</InputLabel>
           <Select
-            value={this.state.currentAudio}
+            value={this.props.editor!.audios.findIndex(
+              this.props.editor!.currentChart!.audio!.
+            )}
             onChange={this.handleAudioChange}
             inputProps={{ name: "currentAudio", id: "audio" }}
           >
@@ -111,7 +141,26 @@ export default class Menu extends React.Component<Props, {}> {
           }}
           margin="normal"
         />
+
+        <Button
+          color="primary"
+          variant="fab"
+          aria-label="Add"
+          className={classes.fab}
+          onClick={() => {
+            // 新規譜面
+            this.props.editor!.newChart();
+            // 新規譜面をアクティブにする
+            this.props.editor!.setCurrentChart(
+              this.props.editor!.charts.length - 1
+            );
+          }}
+        >
+          <AddIcon />
+        </Button>
       </div>
     );
   }
 }
+
+export default withStyles(styles)(Menu);

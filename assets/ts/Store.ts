@@ -15,10 +15,30 @@ export class Editor implements IStore {
   currentChart?: Chart;
 
   @observable
+  currentChartIndex: number = -1;
+
+  @observable
   setting?: EditorSetting;
 
   @observable
-  audios?: IAudio[];
+  audios: IAudio[] = [];
+
+  @observable
+  charts: Chart[] = [];
+
+  /**
+   * 新規譜面を作成する
+   */
+  @action
+  newChart() {
+    this.charts.push(new Chart(""));
+  }
+
+  @action
+  setCurrentChart(chartIndex: number) {
+    this.currentChartIndex = chartIndex;
+    this.currentChart = this.charts[chartIndex];
+  }
 
   @action
   test() {
@@ -32,6 +52,12 @@ export class Editor implements IStore {
 
   constructor() {
     //    this.currentChart = new Chart();
+
+    for (var i = 3; i--; ) {
+      this.newChart();
+    }
+
+    this.setCurrentChart(0);
 
     this.test();
 
@@ -62,7 +88,9 @@ export class Editor implements IStore {
 
     if (audio == null) return;
 
-    if (this.currentChart) this.currentChart.audio.stop();
+    if (this.currentChart && this.currentChart!.audio) {
+      this.currentChart.audio!.stop();
+    }
 
     this.currentChart = new Chart(audio.value);
 

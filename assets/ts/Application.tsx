@@ -35,7 +35,6 @@ const styles = (theme: Theme) =>
     appBar: {
       width: `calc(100% - ${drawerWidth}px)`
     },
-
     "appBar-left": {
       marginLeft: drawerWidth
     },
@@ -67,10 +66,14 @@ import stores from "./Store";
 import { observable } from "mobx";
 import Slider from "@material-ui/lab/Slider";
 
+import ChartTab from "./Tab";
+
 class Application extends React.Component<Props, {}> {
   state = {
     hV: 0,
-    vV: 0
+    vV: 0,
+
+    tabIndex: 0
   };
 
   componentDidMount() {
@@ -97,9 +100,10 @@ class Application extends React.Component<Props, {}> {
           <div className={classes.appFrame}>
             <AppBar
               position="absolute"
+              color="default"
               className={classNames(classes.appBar, classes[`appBar-left`])}
             >
-              <Toolbar>aa</Toolbar>
+              <ChartTab />
             </AppBar>
 
             <Drawer
