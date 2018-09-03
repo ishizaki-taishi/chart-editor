@@ -48,10 +48,7 @@ class Menu extends React.Component<Props, {}> {
 
   handleAudioChange = (event: any) => {
     // this.handleChange(event);
-
     //this.props.editor!.currentChart!.setAudio()
-
-    this.props.editor!.setAudio(event.target.value);
   };
 
   render() {
@@ -65,11 +62,10 @@ class Menu extends React.Component<Props, {}> {
 
     const renderMenu = () => {
       if (!this.props.editor) return <div />;
-      if (!this.props.editor!.audios) return <div />;
 
-      return this.props.editor!.audios!.map((c, i) => (
-        <MenuItem value={c.key} key={i}>
-          {c.key}
+      return this.props.editor!.asset.audioAssetPaths.map((c, i) => (
+        <MenuItem value={i} key={i}>
+          {c.split('/').pop()}
         </MenuItem>
       ));
     };
@@ -85,7 +81,7 @@ class Menu extends React.Component<Props, {}> {
           <PlayArrow />
         </Button>
 
-        {"GUID: " + editor
+        {"GUID2: " + editor
           ? editor.currentChart
             ? editor.currentChart!.guid
             : ""
@@ -94,9 +90,7 @@ class Menu extends React.Component<Props, {}> {
         <FormControl style={{ width: "10rem" }}>
           <InputLabel htmlFor="audio">Audio</InputLabel>
           <Select
-            value={this.props.editor!.audios.findIndex(
-              this.props.editor!.currentChart!.audio!.
-            )}
+            value={0}
             onChange={this.handleAudioChange}
             inputProps={{ name: "currentAudio", id: "audio" }}
           >

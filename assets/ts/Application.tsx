@@ -68,6 +68,8 @@ import Slider from "@material-ui/lab/Slider";
 
 import ChartTab from "./Tab";
 
+import Sidebar from "./Sidebar";
+
 class Application extends React.Component<Props, {}> {
   state = {
     hV: 0,
@@ -113,9 +115,8 @@ class Application extends React.Component<Props, {}> {
               }}
               anchor="left"
             >
-              left drawer
+              <Sidebar />
               <Inspector target={{ a: 0, b: "b" }} />
-              inspector bottom
             </Drawer>
             <main
               className={classes.content}

@@ -6,7 +6,11 @@ import HotReload from "../HotReload";
 interface IStore {}
 
 export default class Chart implements IStore {
+  @observable
   audio?: Howl;
+
+  @observable
+  audioSource?: string;
 
   @observable
   audioBuffer?: AudioBuffer;

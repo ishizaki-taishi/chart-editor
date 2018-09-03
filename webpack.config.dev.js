@@ -38,7 +38,6 @@ module.exports = {
     "react-dom": "ReactDOM",
     "mobx": "mobx",
     "mobx-react": "mobxReact",
-
   },
 
   module: {
