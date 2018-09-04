@@ -19,13 +19,37 @@ export default class Chart implements IStore {
   guid: number;
 
   @action
-  setAudioBuffer(ab: AudioBuffer) {
+  private setAudioBuffer(ab: AudioBuffer) {
     this.audioBuffer = ab;
   }
 
   @action
-  setAudio(source: string) {
-    this.audio = new Howl({ src: source });
+  resetAudio() {
+    delete this.audio;
+    delete this.audioBuffer;
+    delete this.audioSource;
+  }
+
+  @action
+  play(volume: number = 0.5) {
+    if (!this.audio) return;
+
+    this.audio!.volume(volume);
+    this.audio!.play();
+  }
+
+  @action
+  setAudio(buffer: Buffer, source: string) {
+    // BinaryString, UintXXArray, ArrayBuffer -> Blob
+    const blob = new Blob([buffer], { type: "audio/wav" });
+
+    const src = URL.createObjectURL(blob);
+
+    console.warn(src);
+
+    this.audio = new Howl({ src: src, format: ["wav"] });
+
+    this.audioSource = source;
 
     if ((window as any).ps) (window as any).ps.stop();
     (window as any).ps = this.audio;
@@ -47,9 +71,6 @@ export default class Chart implements IStore {
         return audioBuffer;
       }
     );
-
-    this.audio.volume(0.5);
-    // this.audio.play();
   }
 
   constructor(src: string) {
@@ -59,6 +80,6 @@ export default class Chart implements IStore {
       return;
     }
 
-    this.setAudio(src);
+    //this.setAudio(src);
   }
 }

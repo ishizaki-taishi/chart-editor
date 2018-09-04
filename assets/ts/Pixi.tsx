@@ -80,6 +80,10 @@ export default class Pixi extends React.Component<IMainProps, {}> {
 
     graphics.clear();
 
+    // 背景
+    graphics.beginFill(0x171717);
+    graphics.drawRect(0, 0, w, h);
+
     // 縦に何個小節を配置するか
     var hC = this.props.editor!.setting!.verticalLaneCount;
 
@@ -186,8 +190,13 @@ export default class Pixi extends React.Component<IMainProps, {}> {
     const { editor } = this.props;
 
     if (!editor!.currentChart) return;
-    if (!editor!.currentChart!.audioBuffer) return;
+
     this.renderCanvas();
+
+    if (!editor!.currentChart!.audioBuffer) {
+      delete this.renderedAudioBuffer;
+      return;
+    }
 
     const ab = editor!.currentChart!.audioBuffer!;
 

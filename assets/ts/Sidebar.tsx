@@ -13,9 +13,7 @@ import { Editor } from "./Store";
 interface Props {
   editor?: Editor;
 }
-import Button from "@material-ui/core/Button";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
+import { Button } from "@material-ui/core";
 
 import * as Electrom from "electron";
 
@@ -46,11 +44,20 @@ export default class ChartTab extends React.Component<Props, {}> {
           load audio directory
         </Button>
 
-        {editor.asset.audioAssetPaths.map((audioAssetPath, index) => (
-          <div key={index} style={{ margin: "1rem" }}>
-            {audioAssetPath}
-          </div>
-        ))}
+        <div style={{ overflow: "scroll" }}>
+          {editor.asset.audioAssetPaths.map((audioAssetPath, index) => (
+            <div
+              key={index}
+              style={{
+                margin: "0 .5rem",
+                fontSize: "0.8rem",
+                fontFamily: "Roboto"
+              }}
+            >
+              {audioAssetPath.split("/").pop()}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

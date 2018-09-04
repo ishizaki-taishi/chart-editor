@@ -1,15 +1,16 @@
 import * as React from "react";
-import Drawer from "@material-ui/core/Drawer";
+import { AppBar, Drawer, Divider, IconButton } from "@material-ui/core";
+
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
-import AppBar from "@material-ui/core/AppBar";
 
 import classNames from "classnames";
-import Toolbar from "@material-ui/core/Toolbar";
 
 import { withStyles, WithStyles, createStyles } from "@material-ui/core";
 
 import Pixi from "./Pixi";
 import Inspector from "./Inspector";
+
+import Player from "./Player";
 
 import config from "./config";
 
@@ -25,6 +26,19 @@ const styles = (theme: Theme) =>
       position: "relative",
       width: drawerWidth
     },
+    button: {
+      margin: theme.spacing.unit
+    },
+
+    playerButton: {},
+
+    fab: {
+      position: "absolute",
+      top: theme.spacing.unit * 8,
+      right: theme.spacing.unit * 2,
+      zIndex: 1
+    },
+
     appFrame: {
       zIndex: 1,
       overflow: "hidden",
@@ -43,9 +57,26 @@ const styles = (theme: Theme) =>
     paper: {
       /* ... */
     },
-    button: {
-      /* ... */
+
+    timeSliderTrack: {
+      height: "4px",
+      background: "red"
     },
+    timeSliderThumb: {
+      width: "14px",
+      height: "14px",
+      background: "red"
+    },
+    volumeSliderTrack: {
+      height: "4px",
+      background: "#fff"
+    },
+    volumeSliderThumb: {
+      width: "14px",
+      height: "14px",
+      background: "#fff"
+    },
+
     content: {
       flexGrow: 1,
       backgroundColor: theme.palette.background.default
@@ -59,7 +90,7 @@ interface Props extends WithStyles<typeof styles> {
   editor?: Editor;
 }
 
-import Menu from "./Menu";
+import Menu from "./EditorSetting";
 import { Provider, inject, observer } from "mobx-react";
 
 import stores from "./Store";
@@ -69,6 +100,15 @@ import Slider from "@material-ui/lab/Slider";
 import ChartTab from "./Tab";
 
 import Sidebar from "./Sidebar";
+import Settings from "./Settings";
+import { Button } from "@material-ui/core";
+
+import AddIcon from "@material-ui/icons/Add";
+
+import PlayArrow from "@material-ui/icons/PlayArrow";
+import StopIcon from "@material-ui/icons/Stop";
+import SpeakerIcon from "@material-ui/icons/VolumeUp";
+import SettingsIcon from "@material-ui/icons/Settings";
 
 class Application extends React.Component<Props, {}> {
   state = {
@@ -79,6 +119,7 @@ class Application extends React.Component<Props, {}> {
   };
 
   componentDidMount() {
+    /*
     setInterval(() => {
       var t = document.querySelector("#test") as HTMLDivElement;
 
@@ -90,7 +131,9 @@ class Application extends React.Component<Props, {}> {
       t2.style.width =
         (t2.parentElement as HTMLDivElement).offsetWidth - 16 + "px";
         */
+    /*
     }, 100);
+    */
   }
 
   render() {
@@ -105,6 +148,38 @@ class Application extends React.Component<Props, {}> {
               color="default"
               className={classNames(classes.appBar, classes[`appBar-left`])}
             >
+              {/*
+              <div>
+                <Button
+                  variant="fab"
+                  color="primary"
+                  mini
+                  className={classes.button}
+                >
+                  <PlayArrow />
+                </Button>
+                <Button
+                  variant="fab"
+                  color="primary"
+                  mini
+                  className={classes.button}
+                >
+                  <StopIcon />
+                </Button>
+
+                <Button
+                  variant="fab"
+                  color="primary"
+                  mini
+                  className={classes.button}
+                  style={{ float: "right" }}
+                >
+                  <AddIcon />
+                </Button>
+              </div>
+              <Divider />
+            */}
+
               <ChartTab />
             </AppBar>
 
@@ -115,49 +190,56 @@ class Application extends React.Component<Props, {}> {
               }}
               anchor="left"
             >
+              <Settings />
               <Sidebar />
               <Inspector target={{ a: 0, b: "b" }} />
             </Drawer>
+
             <main
               className={classes.content}
               style={{ display: "flex", flexDirection: "column" }}
             >
-              <div className={classes.toolbar} />
-
-              <div style={{ padding: "1rem" }}>
-                <Menu />
-              </div>
+              <div
+                className={classes.toolbar}
+                style={{ marginBottom: "-16px" }}
+              />
 
               <div style={{ flex: 1, display: "flex" }}>
                 <Pixi />
+                {/*}
                 <div style={{ display: "flex" }}>
                   <Slider
                     id="test"
                     value={this.state.hV}
                     min={0}
                     max={1}
-                    step={0.01}
                     onChange={(_, value) => {
                       this.setState({ hV: value });
                     }}
                     vertical
                   />
                 </div>
+                */}
               </div>
-
-              <div style={{ display: "flex" }}>
-                <Slider
-                  value={this.state.vV}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  id="test2"
-                  onChange={(_, value) => {
-                    this.setState({ vV: value });
-                  }}
-                />
-              </div>
+              <Player />
             </main>
+
+            <Button
+              color="primary"
+              variant="fab"
+              aria-label="Add"
+              className={classes.fab}
+              onClick={() => {
+                // 新規譜面
+                this.props.editor!.newChart();
+                // 新規譜面をアクティブにする
+                this.props.editor!.setCurrentChart(
+                  this.props.editor!.charts.length - 1
+                );
+              }}
+            >
+              <AddIcon />
+            </Button>
           </div>
         </div>
       </Provider>

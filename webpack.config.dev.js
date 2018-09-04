@@ -38,6 +38,7 @@ module.exports = {
     "react-dom": "ReactDOM",
     "mobx": "mobx",
     "mobx-react": "mobxReact",
+    "material-ui": "window['material-ui']"
   },
 
   module: {

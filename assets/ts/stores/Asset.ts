@@ -24,6 +24,27 @@ export default class Asset implements IStore {
     this.audioAssetPaths.push(path);
   }
 
+  async loadAudioAsset(path: string): Promise<Buffer> {
+    let r: any;
+
+    const p = new Promise<Buffer>(_r => {
+      r = _r;
+    });
+    console.log("loadAudioAsset");
+
+    fs.readFile(path, function(err: any, content: Buffer) {
+      if (err) {
+        console.error(err);
+      }
+      console.log("cont", content);
+
+      r(content);
+    });
+
+    const n: Buffer = await p;
+    return n;
+  }
+
   @action
   openAudioAssetDirectory() {
     const [dir] = remote.dialog.showOpenDialog({
