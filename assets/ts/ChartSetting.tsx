@@ -3,6 +3,7 @@ import { observer, inject } from "mobx-react";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import {
   Select,
+  TextField,
   FormControl,
   MenuItem,
   InputLabel,
@@ -68,7 +69,15 @@ class ChartSetting extends React.Component<Props, {}> {
 
     return (
       <FormControl>
-        <InputLabel htmlFor="audio">Audio</InputLabel>
+        <TextField
+          id="name"
+          label="タイトル"
+          value={editor.currentChart.name}
+          onChange={(e: any) => editor.currentChart!.setName(e.target.value)}
+          margin="normal"
+        />
+
+        <InputLabel htmlFor="audio">音源</InputLabel>
         {(() => {
           if (!this.props.editor) return <div />;
           if (!this.props.editor!.currentChart) return <div />;

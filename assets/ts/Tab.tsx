@@ -45,7 +45,7 @@ export default class ChartTab extends React.Component<Props, {}> {
       >
         {editor ? (
           editor!.charts.map((chart, index) => (
-            <Tab key={index} label={`Item ${index + 1}`} />
+            <Tab key={index} label={chart.name} />
           ))
         ) : (
           <div />

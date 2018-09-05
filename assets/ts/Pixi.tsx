@@ -89,7 +89,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
 
     var wC = 5;
 
-    const padding = 20;
+    const padding = this.props.editor!.setting!.padding;
 
     const bpm = 120;
 

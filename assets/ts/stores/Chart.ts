@@ -7,6 +7,12 @@ interface IStore {}
 
 export default class Chart implements IStore {
   @observable
+  name: string = "新規譜面";
+
+  @action
+  setName = (name: string) => (this.name = name);
+
+  @observable
   audio?: Howl;
 
   @observable

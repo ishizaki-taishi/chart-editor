@@ -83,6 +83,20 @@ class EditorSetting extends React.Component<Props, {}> {
             }}
             margin="normal"
           />
+
+          <TextField
+            id="number"
+            label="余白"
+            value={editor.setting!.padding}
+            onChange={(e: any) => {
+              editor.setting!.setPadding(e.target.value | 0);
+            }}
+            type="number"
+            InputLabelProps={{
+              shrink: true
+            }}
+            margin="normal"
+          />
         </FormControl>
 
         {/*
