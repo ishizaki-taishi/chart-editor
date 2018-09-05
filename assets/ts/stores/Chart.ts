@@ -40,6 +40,9 @@ export default class Chart implements IStore {
   play(volume: number = 0.5) {
     if (!this.audio) return;
 
+    if ((window as any).ps) (window as any).ps.stop();
+    (window as any).ps = this.audio;
+
     this.audio!.volume(volume);
     this.audio!.play();
   }
@@ -58,7 +61,6 @@ export default class Chart implements IStore {
     this.audioSource = source;
 
     if ((window as any).ps) (window as any).ps.stop();
-    (window as any).ps = this.audio;
 
     var context: AudioContext = (this.audio as any)._sounds[0]._node.context;
 

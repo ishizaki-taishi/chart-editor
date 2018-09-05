@@ -4,9 +4,19 @@ const {
   BrowserWindow
 } = require('electron')
 
+const path = require("path");
+
+const loadDevtool = require('electron-load-devtool');
+
+const audioAssetPath = path.resolve(__dirname, "assets/audio");
+
+console.log(audioAssetPath);
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
+
+console.log(__dirname);
 
 function createWindow() {
   // Create the browser window.
@@ -17,10 +27,15 @@ function createWindow() {
 
   mainWindow.setTitle("ChartEditor");
 
-  // and load the index.html of the app.
-  mainWindow.loadURL(`http://localhost:9000/`);
-  mainWindow.webContents.openDevTools();
 
+  mainWindow.loadURL(`http://localhost:9000?aap=${audioAssetPath}`);
+
+  loadDevtool({
+    id: 'pfgnfdagidkfgccljigdamigbcnndkod',
+    name: 'MobX Developer Tools'
+  });
+
+  mainWindow.webContents.openDevTools();
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()

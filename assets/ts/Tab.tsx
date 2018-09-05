@@ -4,10 +4,6 @@ import { observer, inject } from "mobx-react";
 
 import { configure } from "mobx";
 
-configure({
-  enforceActions: "observed"
-});
-
 import { Editor } from "./Store";
 
 interface Props {

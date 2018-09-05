@@ -105,11 +105,6 @@ import { Button } from "@material-ui/core";
 
 import AddIcon from "@material-ui/icons/Add";
 
-import PlayArrow from "@material-ui/icons/PlayArrow";
-import StopIcon from "@material-ui/icons/Stop";
-import SpeakerIcon from "@material-ui/icons/VolumeUp";
-import SettingsIcon from "@material-ui/icons/Settings";
-
 class Application extends React.Component<Props, {}> {
   state = {
     hV: 0,

@@ -17,7 +17,22 @@ export default class Asset implements IStore {
   @observable
   audioAssetPaths: string[] = [];
 
-  constructor() {}
+  constructor(debugMode: boolean) {
+    if (debugMode) {
+      const urlParams = location.search
+        .substr(1)
+        .split("&")
+        .map(v => v.split("="))
+        .reduce((a: any, b: any) => {
+          a[b[0]] = b[1];
+          return a;
+        }, {});
+
+      console.warn(urlParams.aap);
+
+      this.checkAudioAssetDirectory(decodeURIComponent(urlParams.aap));
+    }
+  }
 
   @action
   pushAudioAssetPath(path: string) {
@@ -26,6 +41,8 @@ export default class Asset implements IStore {
 
   async loadAudioAsset(path: string): Promise<Buffer> {
     let r: any;
+
+    console.log("読み込みます");
 
     const p = new Promise<Buffer>(_r => {
       r = _r;
@@ -46,12 +63,7 @@ export default class Asset implements IStore {
   }
 
   @action
-  openAudioAssetDirectory() {
-    const [dir] = remote.dialog.showOpenDialog({
-      properties: ["openDirectory"]
-    });
-    console.log(dir);
-
+  private checkAudioAssetDirectory(dir: string) {
     fs.readdir(dir, (err: any, files: any[]) => {
       if (err) throw err;
 
@@ -63,5 +75,13 @@ export default class Asset implements IStore {
         this.pushAudioAssetPath(`${dir}/${fileName}`);
       }
     });
+  }
+
+  @action
+  openAudioAssetDirectory() {
+    const [dir] = remote.dialog.showOpenDialog({
+      properties: ["openDirectory"]
+    });
+    this.checkAudioAssetDirectory(dir);
   }
 }

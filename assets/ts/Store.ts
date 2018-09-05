@@ -3,15 +3,12 @@ import { action, observable } from "mobx";
 import Chart from "./stores/Chart";
 interface IStore {}
 
-interface IAudio {
-  key: string;
-  value: string;
-}
-
 import EditorSetting from "./stores/EditorSetting";
 import Asset from "./stores/Asset";
 
 export class Editor implements IStore {
+  readonly debugMode: boolean = true;
+
   @observable
   currentChart?: Chart;
 
@@ -22,7 +19,7 @@ export class Editor implements IStore {
   setting?: EditorSetting;
 
   @observable
-  asset: Asset = new Asset();
+  asset: Asset = new Asset(this.debugMode);
 
   @observable
   charts: Chart[] = [];
@@ -59,8 +56,6 @@ export class Editor implements IStore {
     this.setCurrentChart(0);
 
     this.test();
-
-    const audios = {}; //require("../audio/*.wav");
   }
 }
 

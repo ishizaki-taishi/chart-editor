@@ -17,6 +17,7 @@
     "@types/pixi.js": "^4.8.0",
     "babel-runtime": "^6.26.0",
     "electron": "^2.0.8",
+    "electron-load-devtool": "^1.0.0",
     "file-loader": "^2.0.0",
     "hard-source-webpack-plugin": "^0.12.0",
     "html-webpack-plugin": "^3.2.0",
@@ -39,6 +40,7 @@
     "howler": "^2.0.15",
     "mobx": "^5.1.0",
     "mobx-react": "^5.2.5",
+    "mobx-remotedev": "^0.2.8",
     "react": "^16.3.0",
     "react-dom": "^16.3.0",
     "ts-loader": "^4.5.0"

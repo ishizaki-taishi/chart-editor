@@ -14,7 +14,7 @@ import { observer, inject } from "mobx-react";
 @observer
 export default class Pixi extends React.Component<IMainProps, {}> {
   private app?: PIXI.Application;
-  private gameCanvas?: HTMLDivElement;
+  private container?: HTMLDivElement;
 
   private renderedAudioBuffer?: AudioBuffer;
 
@@ -30,7 +30,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
     this.app.view.style.width = "100%";
     this.app.view.style.height = "100%";
 
-    this.gameCanvas!.appendChild(this.app.view);
+    this.container!.appendChild(this.app.view);
 
     const app = this.app;
 
@@ -187,36 +187,24 @@ export default class Pixi extends React.Component<IMainProps, {}> {
    * 譜面情報を更新する
    */
   private updateAudioInfo() {
-    const { editor } = this.props;
+    const currentChart = this.props.editor!.currentChart!;
 
-    if (!editor!.currentChart) return;
+    this.renderedAudioBuffer = currentChart!.audioBuffer;
 
     this.renderCanvas();
-
-    if (!editor!.currentChart!.audioBuffer) {
-      delete this.renderedAudioBuffer;
-      return;
-    }
-
-    const ab = editor!.currentChart!.audioBuffer!;
-
-    // 既に描画済みの AudioBuffer
-    if (this.renderedAudioBuffer == ab) return;
-
-    this.renderedAudioBuffer = ab;
   }
 
   render() {
     let component = this;
 
-    console.log(this.gameCanvas);
+    console.log("再描画します: pixi", this.props.editor!.currentChart!.name);
 
     this.updateAudioInfo();
 
     return (
       <div
         ref={thisDiv => {
-          component.gameCanvas = thisDiv!;
+          component.container = thisDiv!;
         }}
       />
     );

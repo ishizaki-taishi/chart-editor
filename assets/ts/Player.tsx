@@ -6,8 +6,17 @@ import Slider from "@material-ui/lab/Slider";
 import PlayArrow from "@material-ui/icons/PlayArrow";
 import SpeakerIcon from "@material-ui/icons/VolumeUp";
 import SettingsIcon from "@material-ui/icons/Settings";
+import NotesIcon from "@material-ui/icons/Notes";
 import { IconButton } from "@material-ui/core";
 import { Editor } from "./Store";
+
+function safe(expression: () => any) {
+  try {
+    return expression();
+  } catch (e) {
+    return null;
+  }
+}
 
 const styles = (theme: Theme) =>
   createStyles({
@@ -51,6 +60,13 @@ class Player extends React.Component<Props, {}> {
   private handleChartChange = (_: any, value: number) => {
     this.props.editor!.setCurrentChart(value);
   };
+
+  private formatTime(time: number) {
+    const sec = Math.floor(time % 60);
+    const min = Math.floor(time / 60);
+
+    return `${min}:${sec.toString().padStart(2, "0")}`;
+  }
 
   render() {
     const editor = this.props.editor;
@@ -118,13 +134,30 @@ class Player extends React.Component<Props, {}> {
             }}
           />
           <span style={{ color: "#fff", fontFamily: "Roboto" }}>
-            99:99 / 99:99
+            {this.formatTime(
+              safe(
+                () =>
+                  this.props.editor!.currentChart!.audioBuffer!.duration *
+                  this.state.vV
+              )
+            )}
+            {" / "}
+            {this.formatTime(
+              safe(() => this.props.editor!.currentChart!.audioBuffer!.duration)
+            )}
           </span>
 
           <IconButton
             style={{ color: "#fff", float: "right" }}
             className={classes.playerButton}
-            aria-label="Delete"
+            aria-label=""
+          >
+            <NotesIcon />
+          </IconButton>
+          <IconButton
+            style={{ color: "#fff", float: "right" }}
+            className={classes.playerButton}
+            aria-label=""
           >
             <SettingsIcon />
           </IconButton>
