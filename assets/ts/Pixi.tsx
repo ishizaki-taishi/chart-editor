@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Editor } from "./Store";
+import { Editor } from "./stores/EditorStore";
 
 interface IMainProps {
   editor?: Editor;
@@ -23,6 +23,8 @@ export default class Pixi extends React.Component<IMainProps, {}> {
   }
 
   private graphics?: PIXI.Graphics;
+
+  private rr?: PIXI.RenderTexture;
 
   componentDidMount() {
     this.app = new PIXI.Application(window.innerWidth, window.innerHeight);
@@ -55,8 +57,8 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         this.renderCanvas();
       }
 
-      graphics.x = 0;
-      graphics.y = 0;
+      //graphics.x = 0;
+      //graphics.y = 0;
     });
 
     this.app.start();
@@ -66,12 +68,15 @@ export default class Pixi extends React.Component<IMainProps, {}> {
     this.app!.stop();
   }
 
+  texts: PIXI.Text[] = [];
+
   /**
    * canvas を再描画する
    */
   private renderCanvas() {
     if (!this.app) return;
-    console.log("re:render pixi canvas");
+
+    // console.log("re:render pixi canvas");
 
     const w = this.app!.renderer.width;
     const h = this.app!.renderer.height;
@@ -87,15 +92,18 @@ export default class Pixi extends React.Component<IMainProps, {}> {
     // 縦に何個小節を配置するか
     var hC = this.props.editor!.setting!.verticalLaneCount;
 
-    var wC = 5;
+    var wC = 50;
 
     const padding = this.props.editor!.setting!.padding;
 
-    const bpm = 120;
+    const currentTime = this.props.editor!.currentChart!.time;
+    //console.log(currentTime);
+
+    const bpm = 138;
 
     const unitTime = (60 / bpm) * 4;
 
-    while (graphics.children[0]) graphics.removeChild(graphics.children[0]);
+    // while (graphics.children[0]) graphics.removeChild(graphics.children[0]);
 
     (window as any).g = graphics;
 
@@ -107,6 +115,12 @@ export default class Pixi extends React.Component<IMainProps, {}> {
       ? this.renderedAudioBuffer.getChannelData(0)
       : null;
 
+    // 判定ラインの x 座標
+    let cx = 0;
+    // 0 ~ 1 に正規化された判定ラインの y 座標
+    let cy = 0;
+
+    // レーンを描画
     for (var $x = 0; $x < wC; ++$x) {
       for (var i = hC - 1; i >= 0; --i) {
         var hh = (h - padding * 2) / hC;
@@ -119,13 +133,13 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         graphics.beginFill(0x333333);
         graphics.drawRect(x, y, laneWidth, hh);
 
-        if (this.renderedAudioBuffer) {
+        // 小節の開始時刻、終了時刻
+        var b = unitTime * index;
+        var e = unitTime * (index + 1);
+
+        if (this.renderedAudioBuffer && 0.4 > 1) {
           // TODO: ステレオ判定
           // if (ab.numberOfChannels > 1)
-
-          // 小節の開始時刻、終了時刻
-          var b = unitTime * index;
-          var e = unitTime * (index + 1);
 
           (window as any).ch = channel;
 
@@ -152,35 +166,62 @@ export default class Pixi extends React.Component<IMainProps, {}> {
               // value = value * 0.5 + 0.5; //) / 2;
 
               graphics
-                .lineStyle(1, 0x00ff00)
+                .lineStyle(1, 0x00ff00, 0.3)
                 .moveTo(x + laneWidth / 2 - (value * laneWidth) / 2, y + ii)
                 .lineTo(x + laneWidth / 2 + (value * laneWidth) / 2, y + ii);
             }
           }
         }
 
-        let text = new PIXI.Text(index + "", {
-          fontFamily: "Arial",
-          fontSize: 20,
-          fill: 0xffffff,
-          align: "center",
-          // textBaseline: "middle",
-          dropShadow: true,
-          dropShadowBlur: 8,
-          dropShadowColor: "#000000",
-          dropShadowDistance: 0
-        });
+        // 小節の中に現在時刻があるなら
+        if (b <= currentTime && currentTime < e) {
+          // 0 ~ 1
+          const pos = (currentTime - b) / (e - b);
+
+          const $y = y + hh - hh * pos;
+
+          cx = x + laneWidth / 2;
+          // 0 ~ 1
+          cy = (hC - 1 - i + pos) / hC;
+
+          graphics
+            .lineStyle(4, 0xff0000)
+            .moveTo(x, $y)
+            .lineTo(x + laneWidth, $y);
+        }
+
+        if (!this.texts[index]) {
+          let text = new PIXI.Text(index + "", {
+            fontFamily: "Arial",
+            fontSize: 20,
+            fill: 0xffffff,
+            align: "center",
+            // textBaseline: "middle",
+            dropShadow: true,
+            dropShadowBlur: 8,
+            dropShadowColor: "#000000",
+            dropShadowDistance: 0
+          });
+          graphics.addChild(text);
+
+          this.texts[index] = text;
+        }
+
+        const text = this.texts[index];
 
         text.x = x - 15;
         text.y = y;
 
-        graphics.addChild(text);
-
-        graphics.endFill();
-
         ++index;
       }
     }
+
+    // 対象タイムラインを画面中央に配置する
+    graphics.x = w / 2 - cx;
+
+    graphics.x -= (laneWidth + padding) * (cy - 0.5);
+
+    if (graphics.x > 0) graphics.x = 0;
   }
 
   /**
@@ -197,7 +238,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
   render() {
     let component = this;
 
-    console.log("再描画します: pixi", this.props.editor!.currentChart!.name);
+    //console.log("再描画します: pixi", this.props.editor!.currentChart!.name);
 
     this.updateAudioInfo();
 

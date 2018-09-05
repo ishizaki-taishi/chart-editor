@@ -11,7 +11,7 @@ import {
   withStyles,
   createStyles
 } from "@material-ui/core";
-import { Editor } from "./Store";
+import { Editor } from "./stores/EditorStore";
 
 const styles = (theme: Theme) =>
   createStyles({

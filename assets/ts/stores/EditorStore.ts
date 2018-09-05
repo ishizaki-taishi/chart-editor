@@ -1,10 +1,10 @@
 import { action, observable } from "mobx";
 
-import Chart from "./stores/Chart";
+import Chart from "./Chart";
 interface IStore {}
 
-import EditorSetting from "./stores/EditorSetting";
-import Asset from "./stores/Asset";
+import EditorSetting from "./EditorSetting";
+import Asset from "./Asset";
 
 export class Editor implements IStore {
   readonly debugMode: boolean = true;
@@ -46,8 +46,10 @@ export class Editor implements IStore {
     this.setting = new EditorSetting();
   }
 
+  public static instance: Editor | null = null;
+
   constructor() {
-    //    this.currentChart = new Chart();
+    Editor.instance = this;
 
     for (var i = 3; i--; ) {
       this.newChart();

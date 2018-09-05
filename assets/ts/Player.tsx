@@ -4,17 +4,18 @@ import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import { withStyles, WithStyles, createStyles } from "@material-ui/core";
 import Slider from "@material-ui/lab/Slider";
 import PlayArrow from "@material-ui/icons/PlayArrow";
+import PauseIcon from "@material-ui/icons/Pause";
 import SpeakerIcon from "@material-ui/icons/VolumeUp";
 import SettingsIcon from "@material-ui/icons/Settings";
 import NotesIcon from "@material-ui/icons/Notes";
 import { IconButton } from "@material-ui/core";
-import { Editor } from "./Store";
+import { Editor } from "./stores/EditorStore";
 
-function safe(expression: () => any) {
+function safe(expression: () => any, defaultValue: any = null) {
   try {
     return expression();
   } catch (e) {
-    return null;
+    return defaultValue;
   }
 }
 
@@ -73,6 +74,18 @@ class Player extends React.Component<Props, {}> {
 
     const { classes } = this.props;
 
+    const isPlaying = safe(
+      () => this.props.editor!.currentChart!.isPlaying,
+      false
+    );
+
+    const time = safe(
+      () =>
+        this.props.editor!.currentChart!.time /
+        this.props.editor!.currentChart!.audio!.duration(),
+      0
+    );
+
     return (
       <div>
         <div
@@ -84,7 +97,7 @@ class Player extends React.Component<Props, {}> {
           }}
         >
           <Slider
-            value={this.state.vV}
+            value={time}
             min={0}
             max={1}
             classes={{
@@ -93,22 +106,41 @@ class Player extends React.Component<Props, {}> {
             }}
             id="test2"
             onChange={(_, value) => {
-              this.setState({ vV: value });
+              console.log("TimeChange!", _);
+
+              this.props.editor!.currentChart!.setTime(
+                value * this.props.editor!.currentChart!.audio!.duration(),
+                true
+              );
             }}
           />
         </div>
 
         <div style={{ background: "#000", marginTop: "-14px" }}>
-          <IconButton
-            style={{ color: "#fff" }}
-            className={classes.playerButton}
-            aria-label="Delete"
-            onClick={() => {
-              this.props.editor!.currentChart!.play();
-            }}
-          >
-            <PlayArrow />
-          </IconButton>
+          {!isPlaying ? (
+            <IconButton
+              style={{ color: "#fff" }}
+              className={classes.playerButton}
+              aria-label=""
+              onClick={() => {
+                this.props.editor!.currentChart!.play();
+              }}
+            >
+              <PlayArrow />
+            </IconButton>
+          ) : (
+            <IconButton
+              style={{ color: "#fff" }}
+              className={classes.playerButton}
+              aria-label=""
+              onClick={() => {
+                this.props.editor!.currentChart!.pause();
+              }}
+            >
+              <PauseIcon />
+            </IconButton>
+          )}
+
           <IconButton
             style={{ color: "#fff" }}
             className={classes.playerButton}
@@ -116,8 +148,10 @@ class Player extends React.Component<Props, {}> {
           >
             <SpeakerIcon />
           </IconButton>
+
+          {/* volume */}
           <Slider
-            value={this.state.vV}
+            value={safe(() => editor!.currentChart!.volume)}
             min={0}
             max={1}
             style={{
@@ -130,15 +164,15 @@ class Player extends React.Component<Props, {}> {
               thumb: classes.volumeSliderThumb
             }}
             onChange={(_, value) => {
-              this.setState({ vV: value });
+              editor!.currentChart!.setVolume(value);
             }}
           />
+
           <span style={{ color: "#fff", fontFamily: "Roboto" }}>
             {this.formatTime(
               safe(
                 () =>
-                  this.props.editor!.currentChart!.audioBuffer!.duration *
-                  this.state.vV
+                  this.props.editor!.currentChart!.audioBuffer!.duration * time
               )
             )}
             {" / "}

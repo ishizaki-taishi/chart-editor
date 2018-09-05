@@ -34,9 +34,9 @@ const styles = (theme: Theme) =>
 
     fab: {
       position: "absolute",
-      top: theme.spacing.unit * 8,
+      top: theme.spacing.unit * 0.5,
       right: theme.spacing.unit * 2,
-      zIndex: 1
+      zIndex: 10000
     },
 
     appFrame: {
@@ -84,7 +84,7 @@ const styles = (theme: Theme) =>
     }
   });
 
-import { Editor } from "./Store";
+import { Editor } from "./stores/EditorStore";
 
 interface Props extends WithStyles<typeof styles> {
   editor?: Editor;
@@ -93,7 +93,7 @@ interface Props extends WithStyles<typeof styles> {
 import Menu from "./EditorSetting";
 import { Provider, inject, observer } from "mobx-react";
 
-import stores from "./Store";
+import stores from "./stores/EditorStore";
 import { observable } from "mobx";
 import Slider from "@material-ui/lab/Slider";
 
@@ -223,6 +223,7 @@ class Application extends React.Component<Props, {}> {
               color="primary"
               variant="fab"
               aria-label="Add"
+              mini
               className={classes.fab}
               onClick={() => {
                 // 新規譜面

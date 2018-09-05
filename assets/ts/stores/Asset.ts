@@ -1,8 +1,15 @@
 import { action, observable } from "mobx";
+import { Editor } from "./EditorStore";
 
 import * as Electrom from "electron";
 
+const __require = (window as any).require;
+
 var fs = (window as any).require("fs");
+
+const util = __require("util");
+
+console.warn("utk", util);
 
 console.log("fs", fs);
 const electron = (window as any).require("electron");
@@ -30,7 +37,14 @@ export default class Asset implements IStore {
 
       console.warn(urlParams.aap);
 
-      this.checkAudioAssetDirectory(decodeURIComponent(urlParams.aap));
+      (async () => {
+        await this.checkAudioAssetDirectory(decodeURIComponent(urlParams.aap));
+
+        // 譜面を読み込む
+        const path = this.audioAssetPaths[24];
+        const nn = await this.loadAudioAsset(path);
+        Editor.instance!.currentChart!.setAudio(nn, path);
+      })();
     }
   }
 
@@ -63,18 +77,16 @@ export default class Asset implements IStore {
   }
 
   @action
-  private checkAudioAssetDirectory(dir: string) {
-    fs.readdir(dir, (err: any, files: any[]) => {
-      if (err) throw err;
+  private async checkAudioAssetDirectory(dir: string) {
+    const files: any[] = await util.promisify(fs.readdir)(dir);
 
-      var fileList = files.filter(function(file) {
-        return fs.statSync(dir + "/" + file).isFile() && /.*\.wav$/.test(file); //絞り込み
-      });
-
-      for (const fileName of fileList) {
-        this.pushAudioAssetPath(`${dir}/${fileName}`);
-      }
+    var fileList = files.filter(function(file) {
+      return fs.statSync(dir + "/" + file).isFile() && /.*\.wav$/.test(file); //絞り込み
     });
+
+    for (const fileName of fileList) {
+      this.pushAudioAssetPath(`${dir}/${fileName}`);
+    }
   }
 
   @action
