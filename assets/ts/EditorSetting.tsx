@@ -54,11 +54,11 @@ class EditorSetting extends React.Component<Props, {}> {
     const classes = this.props.classes;
 
     return (
-      <div>
+      <div style={{ width: "100%" }}>
         <FormControl>
           <TextField
             id="number"
-            label="Number"
+            label="タイムライン幅"
             value={editor.setting!.laneWidth}
             onChange={(e: any) => {
               editor.setting!.setLaneWidth(e.target.value | 0);

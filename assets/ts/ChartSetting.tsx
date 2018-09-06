@@ -68,43 +68,66 @@ class ChartSetting extends React.Component<Props, {}> {
     const { classes } = this.props;
 
     return (
-      <FormControl>
-        <TextField
-          id="name"
-          label="タイトル"
-          value={editor.currentChart.name}
-          onChange={(e: any) => editor.currentChart!.setName(e.target.value)}
-          margin="normal"
-        />
+      <div style={{ width: "100%" }}>
+        <FormControl>
+          <TextField
+            id="name"
+            label="タイトル"
+            value={editor.currentChart.name}
+            onChange={(e: any) => editor.currentChart!.setName(e.target.value)}
+            margin="normal"
+          />
 
-        <InputLabel htmlFor="audio">音源</InputLabel>
-        {(() => {
-          if (!this.props.editor) return <div />;
-          if (!this.props.editor!.currentChart) return <div />;
+          <InputLabel htmlFor="audio">音源</InputLabel>
+          {(() => {
+            if (!this.props.editor) return <div />;
+            if (!this.props.editor!.currentChart) return <div />;
 
-          // 選択中の楽曲のインデックス
-          const selectIndex = editor.asset.audioAssetPaths.findIndex(
-            path => path === editor.currentChart!.audioSource
-          );
+            // 選択中の楽曲のインデックス
+            const selectIndex = editor.asset.audioAssetPaths.findIndex(
+              path => path === editor.currentChart!.audioSource
+            );
 
-          return (
-            <Select
-              value={selectIndex}
-              onChange={this.handleAudioChange}
-              inputProps={{ name: "currentAudio", id: "audio" }}
-            >
-              <MenuItem value={-1}>
-                <em>None</em>
-              </MenuItem>
-              {this.props.editor!.asset.audioAssetPaths.map((c, i) => (
-                <MenuItem value={i} key={i}>
-                  {c.split("/").pop()}
+            return (
+              <Select
+                value={selectIndex}
+                onChange={this.handleAudioChange}
+                inputProps={{ name: "currentAudio", id: "audio" }}
+              >
+                <MenuItem value={-1}>
+                  <em>None</em>
                 </MenuItem>
-              ))}
-            </Select>
-          );
-        })()}
-      </FormControl>
+                {this.props.editor!.asset.audioAssetPaths.map((c, i) => (
+                  <MenuItem value={i} key={i}>
+                    {c.split("/").pop()}
+                  </MenuItem>
+                ))}
+              </Select>
+            );
+          })()}
+        </FormControl>
+
+        <div
+          style={{
+            maxHeight: 200,
+            whiteSpace: "pre",
+            overflow: "scroll",
+            background: "#eee"
+          }}
+        >
+          {(() => {
+            const tl = Object.assign({}, editor.currentChart!.timeline);
+
+            tl.bpmChanges = editor.currentChart!.timeline.bpmChanges.map(t =>
+              Object.assign({}, t)
+            );
+
+            for (const e of tl.bpmChanges) delete e.renderer;
+
+            return JSON.stringify(tl, null, 2);
+          })()}
+        </div>
+      </div>
     );
   }
 }

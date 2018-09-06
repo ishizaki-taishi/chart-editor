@@ -3,9 +3,128 @@ import { action, observable, computed } from "mobx";
 
 import HotReload from "../HotReload";
 
+import * as math from "mathjs";
+
+import * as PIXI from "pixi.js";
+
 interface IStore {}
 
+class TimelineObject {
+  /**
+   * 小節インデックス
+   */
+  measureIndex: number = 0;
+  /**
+   * 小節内の位置
+   */
+  measurePosition: math.Fraction | null = null;
+}
+
+class BPMRenderer extends PIXI.Sprite {
+  text: PIXI.Text;
+
+  constructor(public target: BPMChange) {
+    super();
+
+    this.text = new PIXI.Text("aa", {
+      fill: 0xffffff,
+
+      fontSize: 20,
+      align: "center",
+      textBaseline: "middle"
+    });
+
+    this.addChild(this.text);
+  }
+  update(graphics: PIXI.Graphics, measure: PIXI.Container) {
+    const bpm = this.target;
+    const lane = measure;
+
+    this.text.text = "BPM " + this.target.bpm;
+
+    const x = lane.x;
+    const y =
+      lane.y +
+      lane.height -
+      (lane.height / bpm.measurePosition!.d) * bpm.measurePosition!.n;
+
+    this.text.x = x;
+    this.text.y = y;
+
+    graphics
+      .lineStyle(4, 0x00ff00)
+      .moveTo(x, y)
+      .lineTo(x + lane.width, y);
+  }
+}
+
+class BPMChange extends TimelineObject {
+  bpm: number = -1;
+
+  renderer: BPMRenderer | null = null;
+}
+
+class LanePoint extends TimelineObject {
+  horizontalIndex: number = 0;
+  horizontalSize: number = 1;
+}
+
+class Lane extends TimelineObject {
+  points: LanePoint[] = [];
+}
+
+class Timeline {
+  /**
+   * 水平レーン分割数
+   */
+  horizontalLaneDivision: number = 1;
+
+  bpmChanges: BPMChange[] = [];
+
+  /**
+   * レーン
+   */
+  lanes: Lane[] = [];
+}
+
 export default class Chart implements IStore {
+  timeline: Timeline;
+
+  constructor(src: string) {
+    this.timeline = new Timeline();
+
+    {
+      const bpmChange = {
+        bpm: 120,
+        measureIndex: 0,
+        measurePosition: math.fraction(0, 1) as math.Fraction
+      } as BPMChange;
+
+      bpmChange.renderer = new BPMRenderer(bpmChange);
+
+      this.timeline.bpmChanges.push(bpmChange);
+    }
+    {
+      const bpmChange = {
+        bpm: 240,
+        measureIndex: 4,
+        measurePosition: math.fraction(0, 1) as math.Fraction
+      } as BPMChange;
+
+      bpmChange.renderer = new BPMRenderer(bpmChange);
+
+      this.timeline.bpmChanges.push(bpmChange);
+    }
+
+    this.guid = Math.random();
+
+    if (src === "") {
+      return;
+    }
+
+    //this.setAudio(src);
+  }
+
   @observable
   name: string = "新規譜面";
 
@@ -87,7 +206,11 @@ export default class Chart implements IStore {
 
   @action
   setTime = (time: number, seek: boolean = false) => {
-    this.time = time;
+    function clamp(num: number, min: number, max: number) {
+      return num <= min ? min : num >= max ? max : num;
+    }
+
+    this.time = clamp(time, 0, this.audio!.duration());
 
     //    console.log("change time", time);
 
@@ -147,15 +270,5 @@ export default class Chart implements IStore {
         return audioBuffer;
       }
     );
-  }
-
-  constructor(src: string) {
-    this.guid = Math.random();
-
-    if (src === "") {
-      return;
-    }
-
-    //this.setAudio(src);
   }
 }

@@ -19,6 +19,7 @@ import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 
 import EditorSetting from "./EditorSetting";
 import ChartSetting from "./ChartSetting";
+import AssetSetting from "./AssetSetting";
 
 const styles = (theme: Theme) =>
   createStyles({
@@ -68,7 +69,7 @@ class Settings extends React.Component<Props, {}> {
       },
       {
         key: "アセット設定",
-        render: () => <div />
+        render: () => <AssetSetting />
       }
     ];
 

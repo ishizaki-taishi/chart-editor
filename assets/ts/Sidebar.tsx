@@ -31,34 +31,6 @@ export default class ChartTab extends React.Component<Props, {}> {
       return <div />;
     }
 
-    return (
-      <div>
-        <Button
-          color="primary"
-          aria-label="Add"
-          onClick={() => {
-            editor!.asset.openAudioAssetDirectory();
-          }}
-          //className={classes.button}
-        >
-          load audio directory
-        </Button>
-
-        <div style={{ overflow: "scroll" }}>
-          {editor.asset.audioAssetPaths.map((audioAssetPath, index) => (
-            <div
-              key={index}
-              style={{
-                margin: "0 .5rem",
-                fontSize: "0.8rem",
-                fontFamily: "Roboto"
-              }}
-            >
-              {audioAssetPath.split("/").pop()}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <div />;
   }
 }

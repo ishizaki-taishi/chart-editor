@@ -99,6 +99,7 @@ import Slider from "@material-ui/lab/Slider";
 
 import ChartTab from "./Tab";
 
+import Toolbar from "./Toolbar";
 import Sidebar from "./Sidebar";
 import Settings from "./Settings";
 import { Button } from "@material-ui/core";
@@ -143,38 +144,8 @@ class Application extends React.Component<Props, {}> {
               color="default"
               className={classNames(classes.appBar, classes[`appBar-left`])}
             >
-              {/*
-              <div>
-                <Button
-                  variant="fab"
-                  color="primary"
-                  mini
-                  className={classes.button}
-                >
-                  <PlayArrow />
-                </Button>
-                <Button
-                  variant="fab"
-                  color="primary"
-                  mini
-                  className={classes.button}
-                >
-                  <StopIcon />
-                </Button>
-
-                <Button
-                  variant="fab"
-                  color="primary"
-                  mini
-                  className={classes.button}
-                  style={{ float: "right" }}
-                >
-                  <AddIcon />
-                </Button>
-              </div>
+              <Toolbar />
               <Divider />
-            */}
-
               <ChartTab />
             </AppBar>
 
@@ -196,7 +167,7 @@ class Application extends React.Component<Props, {}> {
             >
               <div
                 className={classes.toolbar}
-                style={{ marginBottom: "-16px" }}
+                style={{ marginBottom: "25px" }}
               />
 
               <div style={{ flex: 1, display: "flex" }}>

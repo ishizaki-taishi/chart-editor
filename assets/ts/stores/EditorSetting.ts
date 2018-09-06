@@ -21,4 +21,13 @@ export default class EditorSetting implements IStore {
 
   @action
   setPadding = (value: number) => (this.padding = value);
+
+  /**
+   * 1 小節の分割数
+   */
+  @observable
+  measureDivision: number = 4;
+
+  @action
+  setMeasureDivision = (value: number) => (this.measureDivision = value);
 }
