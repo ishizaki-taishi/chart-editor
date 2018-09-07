@@ -92,6 +92,8 @@ export default class Pixi extends React.Component<IMainProps, {}> {
 
   sprites: PIXI.Sprite[] = [];
 
+  prev: number = 0;
+
   /**
    * canvas を再描画する
    */
@@ -103,11 +105,20 @@ export default class Pixi extends React.Component<IMainProps, {}> {
     const w = this.app!.renderer.width;
     const h = this.app!.renderer.height;
 
+    const buttons = this.app!.renderer.plugins.interaction.mouse.buttons;
+
     const graphics = this.graphics!;
+
+    const isClick = this.prev === 0 && buttons === 1;
+    this.prev = buttons;
 
     graphics.clear();
 
     var mousePosition = this.app!.renderer.plugins.interaction.mouse.global;
+
+    // this.app!.renderer.plugins.interaction.mouse.
+
+    console.log(isClick);
 
     // 背景
     // graphics.beginFill(0x171717);
@@ -283,9 +294,28 @@ export default class Pixi extends React.Component<IMainProps, {}> {
             s.y + (s.height / this.props.editor!.setting!.measureDivision) * i;
 
           graphics
-            .lineStyle(1, 0xffffff)
+            .lineStyle(2, 0xffffff, 0.8)
             .moveTo(s.x, y)
             .lineTo(s.x + laneWidth, y);
+        }
+
+        // 小節の横分割線を描画
+        for (
+          let i = 1;
+          i < this.props.editor!.currentChart!.timeline.horizontalLaneDivision;
+          ++i
+        ) {
+          const x =
+            s.x +
+            (laneWidth /
+              this.props.editor!.currentChart!.timeline
+                .horizontalLaneDivision) *
+              i;
+
+          graphics
+            .lineStyle(2, 0xffffff, 0.8)
+            .moveTo(x, s.y)
+            .lineTo(x, s.y + s.height);
         }
       }
 
@@ -296,7 +326,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
     for (const bpm of chart.timeline.bpmChanges) {
       if (!bpm.renderer) continue;
 
-      console.log("renderer!!");
+      // console.log("renderer!!");
 
       const lane = this.sprites[bpm.measureIndex];
 

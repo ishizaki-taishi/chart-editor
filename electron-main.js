@@ -9,11 +9,8 @@ const path = require("path");
 const loadDevtool = require('electron-load-devtool');
 
 const audioAssetPath = path.resolve(__dirname, "assets/audio");
+const musicGameSystemsPath = path.resolve(__dirname, "assets/musicGameSystems");
 
-console.log(audioAssetPath);
-
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 
 console.log(__dirname);
@@ -28,7 +25,7 @@ function createWindow() {
   mainWindow.setTitle("ChartEditor");
 
 
-  mainWindow.loadURL(`http://localhost:9000?aap=${audioAssetPath}`);
+  mainWindow.loadURL(`http://localhost:9000?aap=${audioAssetPath}&mgsp=${musicGameSystemsPath}`);
 
   loadDevtool({
     id: 'pfgnfdagidkfgccljigdamigbcnndkod',

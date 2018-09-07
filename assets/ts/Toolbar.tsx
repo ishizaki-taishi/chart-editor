@@ -1,9 +1,8 @@
 import * as React from "react";
 
 import { observer, inject } from "mobx-react";
-
-import { configure } from "mobx";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
+import { safe } from "../ts/util";
 
 import { Editor } from "./stores/EditorStore";
 import {
@@ -15,9 +14,39 @@ import {
   MenuItem
 } from "@material-ui/core";
 
+/**
+ * 編集モード
+ */
+enum EditMode {
+  Select = 1,
+  Add,
+  Delete,
+  Connect
+}
+
+/**
+ *
+ */
+enum ObjectCategory {
+  // ノート
+  Note = 1,
+  // レーン
+  Lane,
+  // 特殊
+  S
+}
+
+import ToggleButton from "@material-ui/lab/ToggleButton";
+import ToggleButtonGroup from "@material-ui/lab/ToggleButton/ToggleButtonGroup";
+
 import { IconButton, Badge, Tab } from "@material-ui/core";
 import AddIcon from "@material-ui/icons/add";
 import MenuIcon from "@material-ui/icons/menu";
+import CreateIcon from "@material-ui/icons/create";
+import ClearIcon from "@material-ui/icons/clear";
+import ArrowUpwardIcon from "@material-ui/icons/ArrowUpward";
+import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
+import ShowChartIcon from "@material-ui/icons/ShowChart";
 
 const styles = (theme: Theme) =>
   createStyles({
@@ -30,6 +59,15 @@ const styles = (theme: Theme) =>
           ? theme.palette.grey[200]
           : theme.palette.grey[900]
       }`
+    },
+    toggleContainer: {
+      // height: 56,
+      padding: `${theme.spacing.unit}px ${theme.spacing.unit * 2}px`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "flex-start",
+      // margin: `${theme.spacing.unit}px 0`,
+      background: theme.palette.background.default
     }
   });
 
@@ -37,10 +75,24 @@ interface Props extends WithStyles<typeof styles> {
   editor?: Editor;
 }
 
+interface INoteType {
+  name: string;
+}
+
 @inject("editor")
 @observer
 class Toolbar extends React.Component<Props, {}> {
   state = {
+    objectIndex: ObjectCategory.Note,
+
+    // タイムライン上に配置するオブジェクトのサイズ
+    timelineDivisionSize: 1,
+    // レーン上に配置するオブジェクのサイズ
+    laneDivisionSize: 1,
+
+    laneAnchorEl: null,
+    noteAnchorEl: null,
+
     anchorEl: null
   };
 
@@ -54,6 +106,8 @@ class Toolbar extends React.Component<Props, {}> {
   render() {
     const editor = this.props.editor;
     const { anchorEl } = this.state;
+
+    const { classes } = this.props;
 
     return (
       <div
@@ -73,14 +127,25 @@ class Toolbar extends React.Component<Props, {}> {
           </IconButton>
         </Badge>
 
+        <Badge
+          badgeContent={this.props.editor!.setting!.measureDivision}
+          color="primary"
+          classes={{ badge: this.props.classes.badge }}
+        >
+          <IconButton aria-label="Delete" onClick={this.handleClick}>
+            <MenuIcon />
+          </IconButton>
+        </Badge>
+
         <Menu
           id="simple-menu"
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={this.handleClose}
         >
-          {[1, 2, 3, 4, 8, 16, 32, 64].map(value => (
+          {[1, 2, 3, 4, 8, 16, 32, 64].map((value, index) => (
             <MenuItem
+              key={index}
               onClick={(e: any) => {
                 this.props.editor!.setting!.setMeasureDivision(value);
                 this.handleClose();
@@ -91,8 +156,129 @@ class Toolbar extends React.Component<Props, {}> {
           ))}
         </Menu>
 
-        {Array.from({ length: 10 }).map(_ => (
-          <IconButton aria-label="Delete">
+        <div className={classes.toggleContainer}>
+          <ToggleButtonGroup
+            value={this.props.editor!.setting!.editMode}
+            exclusive
+            onChange={(v: any) => {
+              if (v === null) return;
+
+              this.props.editor!.setting!.setEditMode(v as EditMode);
+            }}
+          >
+            <ToggleButton value={EditMode.Select}>
+              <ArrowUpwardIcon />
+            </ToggleButton>
+            <ToggleButton value={EditMode.Add}>
+              <CreateIcon />
+            </ToggleButton>
+            <ToggleButton value={EditMode.Delete}>
+              <ClearIcon />
+            </ToggleButton>
+            <ToggleButton value={EditMode.Connect}>
+              <ShowChartIcon />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </div>
+
+        <div className={classes.toggleContainer}>
+          <ToggleButtonGroup
+            value={this.state.objectIndex}
+            exclusive
+            onChange={v => {
+              if (v === null) return;
+              this.setState({ objectIndex: v });
+            }}
+          >
+            <ToggleButton value={ObjectCategory.Note}>
+              {safe(
+                () =>
+                  this.props.editor!.currentChart!.musicGameSystem!.noteTypes[
+                    this.props.editor!.setting!.editNoteTypeIndex
+                  ].name
+              )}
+              <ArrowDropDownIcon
+                onClick={(e: any) =>
+                  this.setState({ noteAnchorEl: e.currentTarget })
+                }
+              />
+            </ToggleButton>
+            <ToggleButton value={ObjectCategory.Lane}>
+              {safe(
+                () =>
+                  this.props.editor!.currentChart!.musicGameSystem!
+                    .laneTemplates[
+                    this.props.editor!.setting!.editLaneTypeIndex
+                  ].name
+              )}
+              <ArrowDropDownIcon
+                onClick={(e: any) =>
+                  this.setState({ laneAnchorEl: e.currentTarget })
+                }
+              />
+            </ToggleButton>
+            <ToggleButton value={ObjectCategory.S}>
+              {/*<ClearIcon />*/}
+              BPM
+              <ArrowDropDownIcon onClick={this.handleClick} />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </div>
+
+        {/* 配置ノートタイプ */}
+        <Menu
+          anchorEl={this.state.noteAnchorEl}
+          open={Boolean(this.state.noteAnchorEl)}
+          onClose={(e: any) => {
+            this.setState({ noteAnchorEl: null });
+          }}
+        >
+          {(() => {
+            if (!this.props.editor!.currentChart!.musicGameSystem) return;
+            return this.props.editor!.currentChart!.musicGameSystem!.noteTypes.map(
+              ({ name }, index) => (
+                <MenuItem
+                  key={index}
+                  onClick={() => {
+                    this.props.editor!.setting!.setEditNoteTypeIndex(index);
+                    this.setState({ noteAnchorEl: null });
+                  }}
+                >
+                  {name}
+                </MenuItem>
+              )
+            );
+          })()}
+        </Menu>
+
+        {/* 配置レーンタイプ */}
+        <Menu
+          anchorEl={this.state.laneAnchorEl}
+          open={Boolean(this.state.laneAnchorEl)}
+          onClose={(e: any) => {
+            this.setState({ laneAnchorEl: null });
+          }}
+        >
+          {(() => {
+            if (!this.props.editor!.currentChart!.musicGameSystem) return;
+            return this.props.editor!.currentChart!.musicGameSystem!.laneTemplates.map(
+              ({ name }, index) => (
+                <MenuItem
+                  key={index}
+                  onClick={() => {
+                    this.props.editor!.setting!.setEditLaneTypeIndex(index);
+                    this.setState({ laneAnchorEl: null });
+                  }}
+                >
+                  {name}
+                </MenuItem>
+              )
+            );
+          })()}
+        </Menu>
+
+        {Array.from({ length: 0 }).map((_, index) => (
+          <IconButton key={index} aria-label="Delete">
             <AddIcon />
           </IconButton>
         ))}

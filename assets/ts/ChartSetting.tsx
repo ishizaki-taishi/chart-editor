@@ -69,15 +69,14 @@ class ChartSetting extends React.Component<Props, {}> {
 
     return (
       <div style={{ width: "100%" }}>
+        <TextField
+          id="name"
+          label="タイトル"
+          value={editor.currentChart.name}
+          onChange={(e: any) => editor.currentChart!.setName(e.target.value)}
+          margin="normal"
+        />
         <FormControl>
-          <TextField
-            id="name"
-            label="タイトル"
-            value={editor.currentChart.name}
-            onChange={(e: any) => editor.currentChart!.setName(e.target.value)}
-            margin="normal"
-          />
-
           <InputLabel htmlFor="audio">音源</InputLabel>
           {(() => {
             if (!this.props.editor) return <div />;
@@ -100,6 +99,36 @@ class ChartSetting extends React.Component<Props, {}> {
                 {this.props.editor!.asset.audioAssetPaths.map((c, i) => (
                   <MenuItem value={i} key={i}>
                     {c.split("/").pop()}
+                  </MenuItem>
+                ))}
+              </Select>
+            );
+          })()}
+        </FormControl>
+
+        <FormControl>
+          <InputLabel htmlFor="audio">システム</InputLabel>
+          {(() => {
+            if (!this.props.editor) return <div />;
+            if (!this.props.editor!.currentChart) return <div />;
+
+            // 選択中のシステムのインデックス
+            const selectIndex = editor.asset.musicGameSystems.findIndex(
+              path => path === editor.currentChart!.musicGameSystem
+            );
+
+            return (
+              <Select
+                value={selectIndex}
+                // onChange={this.handleAudioChange}
+                // inputProps={{ name: "currentAudio", id: "audio" }}
+              >
+                <MenuItem value={-1}>
+                  <em>None</em>
+                </MenuItem>
+                {this.props.editor!.asset.musicGameSystems.map((c, i) => (
+                  <MenuItem value={i} key={i}>
+                    {c.name}
                   </MenuItem>
                 ))}
               </Select>

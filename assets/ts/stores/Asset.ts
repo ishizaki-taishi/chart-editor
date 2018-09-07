@@ -9,42 +9,81 @@ var fs = (window as any).require("fs");
 
 const util = __require("util");
 
-console.warn("utk", util);
-
-console.log("fs", fs);
+//console.log("fs", fs);
 const electron = (window as any).require("electron");
 const remote = electron.remote as Electrom.Remote;
 const BrowserWindow = remote.BrowserWindow;
 
 // import * as config from "config";
 
+function parseJSON(text: string) {
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return {};
+  }
+}
+
 interface IStore {}
+
+import MusicGameSystem from "./MusicGameSystem";
 
 export default class Asset implements IStore {
   @observable
   audioAssetPaths: string[] = [];
 
+  @observable
+  musicGameSystems: MusicGameSystem[] = [];
+
+  @action
+  addMusicGameSystem = (value: MusicGameSystem) =>
+    this.musicGameSystems.push(value);
+
+  private async debugInitialize() {
+    const urlParams = location.search
+      .substr(1)
+      .split("&")
+      .map(v => v.split("="))
+      .reduce((a: any, b: any) => {
+        a[b[0]] = b[1];
+        return a;
+      }, {});
+
+    console.warn(urlParams.aap);
+    console.warn(urlParams.mgsp);
+
+    await this.checkAudioAssetDirectory(decodeURIComponent(urlParams.aap));
+
+    // 譜面を読み込む
+    const path = this.audioAssetPaths[24];
+    const nn = await this.loadAudioAsset(path);
+    Editor.instance!.currentChart!.setAudio(nn, path);
+
+    // MusicGameSystem を読み込む
+    {
+      const files: any[] = await util.promisify(fs.readdir)(urlParams.mgsp);
+      console.log(files);
+
+      var fileList = files.filter(file => file.endsWith(".json"));
+      console.log(fileList);
+      for (const file of fileList) {
+        const buffer: Buffer = await util.promisify(fs.readFile)(
+          urlParams.mgsp + "/" + file
+        );
+
+        const json = parseJSON(buffer.toString());
+
+        this.addMusicGameSystem(json as MusicGameSystem);
+      }
+      Editor.instance!.currentChart!.setMusicGameSystem(
+        this.musicGameSystems.find(mgs => mgs.name === "ongeki")!
+      );
+    }
+  }
+
   constructor(debugMode: boolean) {
     if (debugMode) {
-      const urlParams = location.search
-        .substr(1)
-        .split("&")
-        .map(v => v.split("="))
-        .reduce((a: any, b: any) => {
-          a[b[0]] = b[1];
-          return a;
-        }, {});
-
-      console.warn(urlParams.aap);
-
-      (async () => {
-        await this.checkAudioAssetDirectory(decodeURIComponent(urlParams.aap));
-
-        // 譜面を読み込む
-        const path = this.audioAssetPaths[24];
-        const nn = await this.loadAudioAsset(path);
-        Editor.instance!.currentChart!.setAudio(nn, path);
-      })();
+      this.debugInitialize();
     }
   }
 
@@ -53,27 +92,12 @@ export default class Asset implements IStore {
     this.audioAssetPaths.push(path);
   }
 
-  async loadAudioAsset(path: string): Promise<Buffer> {
-    let r: any;
-
-    console.log("読み込みます");
-
-    const p = new Promise<Buffer>(_r => {
-      r = _r;
-    });
+  async loadAudioAsset(path: string) {
     console.log("loadAudioAsset");
 
-    fs.readFile(path, function(err: any, content: Buffer) {
-      if (err) {
-        console.error(err);
-      }
-      console.log("cont", content);
+    const buffer: Buffer = await util.promisify(fs.readFile)(path);
 
-      r(content);
-    });
-
-    const n: Buffer = await p;
-    return n;
+    return buffer;
   }
 
   @action

@@ -2,18 +2,15 @@ import * as React from "react";
 import { observer, inject } from "mobx-react";
 import { Theme } from "@material-ui/core/styles/createMuiTheme";
 import {
+  ExpansionPanel,
+  ExpansionPanelSummary,
+  ExpansionPanelDetails,
   withStyles,
   WithStyles,
   createStyles,
   Divider
 } from "@material-ui/core";
 import { Editor } from "./stores/EditorStore";
-import {
-  ExpansionPanel,
-  ExpansionPanelSummary,
-  ExpansionPanelDetails,
-  Typography
-} from "@material-ui/core";
 
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 

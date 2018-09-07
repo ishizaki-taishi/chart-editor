@@ -11,13 +11,7 @@ import NotesIcon from "@material-ui/icons/Notes";
 import { IconButton } from "@material-ui/core";
 import { Editor } from "./stores/EditorStore";
 
-function safe(expression: () => any, defaultValue: any = null) {
-  try {
-    return expression();
-  } catch (e) {
-    return defaultValue;
-  }
-}
+import { safe } from "../ts/util";
 
 const styles = (theme: Theme) =>
   createStyles({

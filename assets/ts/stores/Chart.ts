@@ -6,6 +6,7 @@ import HotReload from "../HotReload";
 import * as math from "mathjs";
 
 import * as PIXI from "pixi.js";
+import MusicGameSystem from "./MusicGameSystem";
 
 interface IStore {}
 
@@ -29,10 +30,17 @@ class BPMRenderer extends PIXI.Sprite {
     this.text = new PIXI.Text("aa", {
       fill: 0xffffff,
 
-      fontSize: 20,
-      align: "center",
-      textBaseline: "middle"
+      dropShadow: true,
+      dropShadowBlur: 8,
+      dropShadowColor: "#000000",
+      dropShadowDistance: 0,
+
+      fontSize: 16,
+      align: "center"
+      //textBaseline: "middle"
     });
+
+    this.text.anchor.set(0.5);
 
     this.addChild(this.text);
   }
@@ -48,7 +56,7 @@ class BPMRenderer extends PIXI.Sprite {
       lane.height -
       (lane.height / bpm.measurePosition!.d) * bpm.measurePosition!.n;
 
-    this.text.x = x;
+    this.text.x = x + measure.width / 2;
     this.text.y = y;
 
     graphics
@@ -77,7 +85,7 @@ class Timeline {
   /**
    * 水平レーン分割数
    */
-  horizontalLaneDivision: number = 1;
+  horizontalLaneDivision: number = 16;
 
   bpmChanges: BPMChange[] = [];
 
@@ -130,6 +138,13 @@ export default class Chart implements IStore {
 
   @action
   setName = (name: string) => (this.name = name);
+
+  @observable
+  musicGameSystem?: MusicGameSystem;
+
+  @action
+  setMusicGameSystem = (value: MusicGameSystem) =>
+    (this.musicGameSystem = value);
 
   @observable
   audio?: Howl;

@@ -1,8 +1,46 @@
 import { action, observable } from "mobx";
 
-interface IStore {}
+/**
+ * 編集モード
+ */
+enum EditMode {
+  Select = 1,
+  Add,
+  Delete,
+  Connect
+}
 
-export default class EditorSetting implements IStore {
+/**
+ *
+ */
+enum ObjectCategory {
+  // ノート
+  Note,
+  // レーン
+  Lane,
+  // 特殊
+  S
+}
+
+export default class EditorSetting {
+  @observable
+  editMode = EditMode.Select;
+
+  @action
+  setEditMode = (value: EditMode) => (this.editMode = value);
+
+  @observable
+  editNoteTypeIndex = 0;
+
+  @action
+  setEditNoteTypeIndex = (value: number) => (this.editNoteTypeIndex = value);
+
+  @observable
+  editLaneTypeIndex = 0;
+
+  @action
+  setEditLaneTypeIndex = (value: number) => (this.editLaneTypeIndex = value);
+
   @observable
   laneWidth = 200;
 
