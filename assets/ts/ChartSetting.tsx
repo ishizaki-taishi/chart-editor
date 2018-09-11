@@ -150,8 +150,12 @@ class ChartSetting extends React.Component<Props, {}> {
             tl.bpmChanges = editor.currentChart!.timeline.bpmChanges.map(t =>
               Object.assign({}, t)
             );
+            tl.lanePoints = editor.currentChart!.timeline.lanePoints.map(t =>
+              Object.assign({}, t)
+            );
 
             for (const e of tl.bpmChanges) delete e.renderer;
+            for (const e of tl.lanePoints) delete e.renderer;
 
             return JSON.stringify(tl, null, 2);
           })()}

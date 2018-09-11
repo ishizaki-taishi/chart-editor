@@ -1,4 +1,4 @@
-interface LaneTemplate {
+export interface LaneTemplate {
   name: string;
   color: string;
 }

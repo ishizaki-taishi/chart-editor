@@ -3,7 +3,7 @@ import { action, observable } from "mobx";
 /**
  * 編集モード
  */
-enum EditMode {
+export enum EditMode {
   Select = 1,
   Add,
   Delete,
@@ -13,9 +13,9 @@ enum EditMode {
 /**
  *
  */
-enum ObjectCategory {
+export enum ObjectCategory {
   // ノート
-  Note,
+  Note = 1,
   // レーン
   Lane,
   // 特殊
@@ -25,9 +25,14 @@ enum ObjectCategory {
 export default class EditorSetting {
   @observable
   editMode = EditMode.Select;
-
   @action
   setEditMode = (value: EditMode) => (this.editMode = value);
+
+  @observable
+  editObjectCategory = ObjectCategory.Note;
+  @action
+  setEditObjectCategory = (value: ObjectCategory) =>
+    (this.editObjectCategory = value);
 
   @observable
   editNoteTypeIndex = 0;

@@ -83,8 +83,6 @@ interface INoteType {
 @observer
 class Toolbar extends React.Component<Props, {}> {
   state = {
-    objectIndex: ObjectCategory.Note,
-
     // タイムライン上に配置するオブジェクトのサイズ
     timelineDivisionSize: 1,
     // レーン上に配置するオブジェクのサイズ
@@ -183,11 +181,12 @@ class Toolbar extends React.Component<Props, {}> {
 
         <div className={classes.toggleContainer}>
           <ToggleButtonGroup
-            value={this.state.objectIndex}
+            value={this.props.editor!.setting!.editObjectCategory}
             exclusive
             onChange={v => {
               if (v === null) return;
-              this.setState({ objectIndex: v });
+              this.props.editor!.setting!.setEditObjectCategory(v as any);
+              //              this.setState({ objectIndex: v });
             }}
           >
             <ToggleButton value={ObjectCategory.Note}>

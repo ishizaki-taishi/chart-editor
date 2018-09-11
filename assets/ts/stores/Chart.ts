@@ -3,97 +3,16 @@ import { action, observable, computed } from "mobx";
 
 import HotReload from "../HotReload";
 
-import * as math from "mathjs";
+import { Fraction } from "../math";
 
 import * as PIXI from "pixi.js";
 import MusicGameSystem from "./MusicGameSystem";
 
 interface IStore {}
 
-class TimelineObject {
-  /**
-   * 小節インデックス
-   */
-  measureIndex: number = 0;
-  /**
-   * 小節内の位置
-   */
-  measurePosition: math.Fraction | null = null;
-}
-
-class BPMRenderer extends PIXI.Sprite {
-  text: PIXI.Text;
-
-  constructor(public target: BPMChange) {
-    super();
-
-    this.text = new PIXI.Text("aa", {
-      fill: 0xffffff,
-
-      dropShadow: true,
-      dropShadowBlur: 8,
-      dropShadowColor: "#000000",
-      dropShadowDistance: 0,
-
-      fontSize: 16,
-      align: "center"
-      //textBaseline: "middle"
-    });
-
-    this.text.anchor.set(0.5);
-
-    this.addChild(this.text);
-  }
-  update(graphics: PIXI.Graphics, measure: PIXI.Container) {
-    const bpm = this.target;
-    const lane = measure;
-
-    this.text.text = "BPM " + this.target.bpm;
-
-    const x = lane.x;
-    const y =
-      lane.y +
-      lane.height -
-      (lane.height / bpm.measurePosition!.d) * bpm.measurePosition!.n;
-
-    this.text.x = x + measure.width / 2;
-    this.text.y = y;
-
-    graphics
-      .lineStyle(4, 0x00ff00)
-      .moveTo(x, y)
-      .lineTo(x + lane.width, y);
-  }
-}
-
-class BPMChange extends TimelineObject {
-  bpm: number = -1;
-
-  renderer: BPMRenderer | null = null;
-}
-
-class LanePoint extends TimelineObject {
-  horizontalIndex: number = 0;
-  horizontalSize: number = 1;
-}
-
-class Lane extends TimelineObject {
-  points: LanePoint[] = [];
-}
-
-class Timeline {
-  /**
-   * 水平レーン分割数
-   */
-  horizontalLaneDivision: number = 16;
-
-  bpmChanges: BPMChange[] = [];
-
-  /**
-   * レーン
-   */
-  lanes: Lane[] = [];
-}
+import Timeline from "../objects/Timeline";
+import BPMChange, { BPMRenderer } from "../objects/BPMChange";
+import LanePoint, { LanePointRenderer } from "../objects/LanePoint";
 
 export default class Chart implements IStore {
   timeline: Timeline;
@@ -105,18 +24,32 @@ export default class Chart implements IStore {
       const bpmChange = {
         bpm: 120,
         measureIndex: 0,
-        measurePosition: math.fraction(0, 1) as math.Fraction
+        measurePosition: new Fraction(0, 1)
       } as BPMChange;
 
       bpmChange.renderer = new BPMRenderer(bpmChange);
 
       this.timeline.bpmChanges.push(bpmChange);
     }
+
+    {
+      /*
+      const aa = {
+        measureIndex: 1,
+        measurePosition: math.fraction(0, 1) as math.Fraction
+      } as LanePoint;
+
+      aa.renderer = new LanePointRenderer(aa);
+
+      this.timeline.lanePoints.push(aa);
+      */
+    }
+
     {
       const bpmChange = {
         bpm: 240,
         measureIndex: 4,
-        measurePosition: math.fraction(0, 1) as math.Fraction
+        measurePosition: new Fraction(0, 1)
       } as BPMChange;
 
       bpmChange.renderer = new BPMRenderer(bpmChange);
