@@ -1,6 +1,9 @@
 import { Fraction } from "../math";
+import { GUID, guid } from "../util";
 
 export default class TimelineObject {
+  guid: GUID = guid();
+
   /**
    * 小節インデックス
    */

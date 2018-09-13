@@ -73,4 +73,13 @@ export default class EditorSetting {
 
   @action
   setMeasureDivision = (value: number) => (this.measureDivision = value);
+
+  /**
+   * 配置するオブジェクトのサイズ
+   */
+  @observable
+  objectSize: number = 1;
+
+  @action
+  setObjectSize = (value: number) => (this.objectSize = value);
 }

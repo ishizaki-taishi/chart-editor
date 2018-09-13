@@ -17,6 +17,10 @@ import { observer, inject } from "mobx-react";
 import Lane, { LaneRenderer } from "./objects/Lane";
 
 import Measure from "./objects/Measure";
+import { guid } from "./util";
+import { containsQuad } from "./utils/contains";
+
+import Vector2 from "./math/Vector2";
 
 @inject("editor")
 @observer
@@ -92,21 +96,21 @@ export default class Pixi extends React.Component<IMainProps, {}> {
   measures: Measure[] = [];
 
   prev: number = 0;
-
   /**
    * canvas を再描画する
    */
   private renderCanvas() {
     if (!this.app) return;
 
+    const graphics = this.graphics!;
+
     const chart = this.props.editor!.currentChart!;
+    const setting = this.props.editor!.setting!;
 
     const w = this.app!.renderer.width;
     const h = this.app!.renderer.height;
 
     const buttons = this.app!.renderer.plugins.interaction.mouse.buttons;
-
-    const graphics = this.graphics!;
 
     const isClick = this.prev === 0 && buttons === 1;
     this.prev = buttons;
@@ -303,22 +307,28 @@ export default class Pixi extends React.Component<IMainProps, {}> {
 
       // if (this.props.editor!.setting!.editMode === EditMode )
 
-      // 小節の横分割線を描画
-      for (
-        let i = 1;
-        i < this.props.editor!.currentChart!.timeline.horizontalLaneDivision;
-        ++i
+      // レーン追加モードなら小節の横分割線を描画
+      if (
+        setting.editMode === EditMode.Add &&
+        setting.editObjectCategory === ObjectCategory.Lane
       ) {
-        const x =
-          s.x +
-          (laneWidth /
-            this.props.editor!.currentChart!.timeline.horizontalLaneDivision) *
-            i;
+        for (
+          let i = 1;
+          i < this.props.editor!.currentChart!.timeline.horizontalLaneDivision;
+          ++i
+        ) {
+          const x =
+            s.x +
+            (laneWidth /
+              this.props.editor!.currentChart!.timeline
+                .horizontalLaneDivision) *
+              i;
 
-        graphics
-          .lineStyle(2, 0xffffff, 0.8)
-          .moveTo(x, s.y)
-          .lineTo(x, s.y + s.height);
+          graphics
+            .lineStyle(2, 0xffffff, 0.8)
+            .moveTo(x, s.y)
+            .lineTo(x, s.y + s.height);
+        }
       }
     }
 
@@ -360,7 +370,13 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         graphics.addChild(lane.renderer!);
       }
 
-      lane.renderer.update(graphics, this.measures);
+      lane.renderer.update(
+        graphics,
+        chart.timeline.lanePoints,
+        this.measures,
+        targetMeasure,
+        setting.measureDivision
+      );
     }
 
     const tempPoint = new PIXI.Point();
@@ -403,11 +419,11 @@ export default class Pixi extends React.Component<IMainProps, {}> {
           // 接続テスト
           console.log("接続テスト");
 
-          chart.timeline.lanes = [
+          chart.timeline.setLanes([
             {
-              points: chart.timeline.lanePoints
+              points: chart.timeline.lanePoints.map(p => p.guid)
             } as Lane
-          ];
+          ]);
 
           chart.timeline.lanes[0].renderer = new LaneRenderer(
             chart.timeline.lanes[0]
@@ -418,7 +434,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
 
     if (
       targetMeasure &&
-      isClick &&
+      // isClick &&
       this.props.editor!.setting!.editMode === EditMode.Add &&
       this.props.editor!.setting!.editObjectCategory === ObjectCategory.Lane
     ) {
@@ -437,12 +453,14 @@ export default class Pixi extends React.Component<IMainProps, {}> {
       const hlDiv = this.props.editor!.currentChart!.timeline
         .horizontalLaneDivision;
 
-      console.log(nx);
-
       const vlDiv = this.props.editor!.setting!.measureDivision;
 
       const clamp = (num: number, min: number, max: number) =>
         num <= min ? min : num >= max ? max : num;
+
+      const maxObjectSize = 16;
+
+      const p = (editor.setting!.objectSize - 1) / maxObjectSize / 2;
 
       const aa = {
         measureIndex: targetMeasure.index,
@@ -450,28 +468,74 @@ export default class Pixi extends React.Component<IMainProps, {}> {
           vlDiv - 1 - clamp(Math.floor(ny * vlDiv), 0, vlDiv - 1),
           vlDiv
         ),
-
+        guid: guid(),
         color: Number(laneT.color),
 
-        horizontalSize: 1,
+        horizontalSize: editor.setting!.objectSize,
         horizontalPosition: new Fraction(
-          clamp(Math.floor(nx * hlDiv), 0, hlDiv - 1),
+          clamp(
+            Math.floor((nx - p) * hlDiv),
+            0,
+            hlDiv - editor.setting!.objectSize
+          ),
           hlDiv
         )
       } as LanePoint;
 
       aa.renderer = new LanePointRenderer(aa);
 
-      this.props.editor!.currentChart!.timeline.lanePoints.push(aa);
+      //lane.renderer.update(graphics, this.measures);
 
-      //if (this.props.editor!.setting!.editMode === EditMode.Add) {
-      console.log(
-        "add",
-        clamp(Math.floor(nx * hlDiv), 0, hlDiv - 1),
-        vlDiv - 1 - clamp(Math.floor(ny * vlDiv), 0, vlDiv - 1)
-      );
-      // }
+      if (isClick) {
+        this.props.editor!.currentChart!.timeline.addLanePoint(aa);
+      } else {
+        // プレビュー
+        graphics.addChild(aa.renderer!);
+        aa.renderer.update(graphics, this.measures[aa.measureIndex]);
+        graphics.removeChild(aa.renderer!);
+      }
     }
+
+    if (targetMeasure) {
+      const s = targetMeasure;
+
+      for (let i = 0; i < this.props.editor!.setting!.measureDivision; ++i) {
+        //        targetMeasure.
+      }
+    }
+
+    /*
+
+    const _a = new Vector2(300, 30);
+    const _b = new Vector2(100, 330);
+    const _c = new Vector2(400, 230);
+    const _d = new Vector2(660, 100);
+    const _p = new Vector2(mousePosition.x - graphics.x, mousePosition.y);
+
+    [_a, _b, _c, _d].forEach(_ => (_.x = _.x + 1000));
+
+    let we = 3;
+    if (containsQuad(_p, _a, _b, _c, _d)) {
+      we = 10;
+    }
+
+    graphics
+      .lineStyle(we, 0xff00ff)
+      .moveTo(_a.x, _a.y)
+      .lineTo(_b.x, _b.y);
+    graphics
+      .lineStyle(we, 0xff00ff)
+      .moveTo(_b.x, _b.y)
+      .lineTo(_c.x, _c.y);
+    graphics
+      .lineStyle(we, 0xff00ff)
+      .moveTo(_c.x, _c.y)
+      .lineTo(_d.x, _d.y);
+    graphics
+      .lineStyle(we, 0xff00ff)
+      .moveTo(_d.x, _d.y)
+      .lineTo(_a.x, _a.y);
+    graphics.drawCircle(_p.x, _p.y, 10);
 
     /*
     for (const lanePoint of this.props.editor!.currentChart!.timeline

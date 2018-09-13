@@ -13,9 +13,45 @@ interface IStore {}
 import Timeline from "../objects/Timeline";
 import BPMChange, { BPMRenderer } from "../objects/BPMChange";
 import LanePoint, { LanePointRenderer } from "../objects/LanePoint";
+import { LaneRenderer } from "../objects/Lane";
 
 export default class Chart implements IStore {
+  @observable
   timeline: Timeline;
+
+  load(json: string) {
+    const chart = JSON.parse(json);
+    console.log("Load!", chart);
+
+    for (const lanePoint of chart.timeline.lanePoints) {
+      lanePoint.measurePosition = new Fraction(
+        lanePoint.measurePosition.numerator,
+        lanePoint.measurePosition.denominator
+      );
+      lanePoint.horizontalPosition = new Fraction(
+        lanePoint.horizontalPosition.numerator,
+        lanePoint.horizontalPosition.denominator
+      );
+
+      lanePoint.renderer = new LanePointRenderer(lanePoint);
+      this.timeline.addLanePoint(lanePoint);
+    }
+    for (const lane of chart.timeline.lanes) {
+      /*
+      lane.measurePosition = new Fraction(
+        lane.measurePosition.numerator,
+        lane.measurePosition.denominator
+      );
+      /*
+      lane.horizontalPosition = new Fraction(
+        lane.horizontalPosition.numerator,
+        lane.horizontalPosition.denominator
+      );
+      */
+      lane.renderer = new LaneRenderer(lane);
+    }
+    this.timeline.setLanes(chart.timeline.lanes);
+  }
 
   constructor(src: string) {
     this.timeline = new Timeline();
@@ -56,14 +92,6 @@ export default class Chart implements IStore {
 
       this.timeline.bpmChanges.push(bpmChange);
     }
-
-    this.guid = Math.random();
-
-    if (src === "") {
-      return;
-    }
-
-    //this.setAudio(src);
   }
 
   @observable
@@ -87,9 +115,6 @@ export default class Chart implements IStore {
 
   @observable
   audioBuffer?: AudioBuffer;
-
-  @observable
-  guid: number;
 
   @observable
   volume: number = 1.0;
@@ -142,15 +167,13 @@ export default class Chart implements IStore {
 
     this.audio!.seek(this.time);
 
-    this.playId = this.audio!.play();
+    this.audio!.play();
   }
 
   private observeTimeId: number | null = null;
 
   @observable
   time: number = 0;
-
-  private playId: number = -1;
 
   @action
   setTime = (time: number, seek: boolean = false) => {
@@ -218,5 +241,38 @@ export default class Chart implements IStore {
         return audioBuffer;
       }
     );
+  }
+
+  toJSON(): string {
+    const chart = Object.assign({}, this);
+
+    delete chart.audio;
+    delete chart.audioBuffer;
+    delete chart.musicGameSystem;
+
+    const tl = (chart.timeline = Object.assign({}, chart.timeline));
+
+    tl.bpmChanges = chart.timeline.bpmChanges.map(t => Object.assign({}, t));
+    tl.lanePoints = chart.timeline.lanePoints.map(t => Object.assign({}, t));
+    tl.lanes = chart.timeline.lanes.map(t => Object.assign({}, t));
+
+    for (const e of tl.bpmChanges) delete e.renderer;
+    for (const e of tl.lanePoints) delete e.renderer;
+    for (const e of tl.lanes) {
+      delete e.renderer;
+      // e.points = []; //e.pointsIndex = e.points.map(point => point.);
+    }
+
+    delete chart.time;
+    //delete chart.timeline;
+
+    //console.log(chart);
+
+    const json = JSON.stringify(chart, null, 2);
+
+    //    localStorage.setItem("chart", json);
+
+    return json;
+    return "1";
   }
 }

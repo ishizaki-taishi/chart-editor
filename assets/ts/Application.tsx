@@ -159,6 +159,15 @@ class Application extends React.Component<Props, {}> {
               <Settings />
               <Sidebar />
               <Inspector target={{ a: 0, b: "b" }} />
+
+              <Button
+                color="primary"
+                variant="fab"
+                aria-label="Add"
+                onClick={() => location.reload()}
+              >
+                reload
+              </Button>
             </Drawer>
 
             <main

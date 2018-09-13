@@ -91,6 +91,8 @@ class Toolbar extends React.Component<Props, {}> {
     laneAnchorEl: null,
     noteAnchorEl: null,
 
+    objectSizeAnchorEl: null,
+
     anchorEl: null
   };
 
@@ -126,11 +128,16 @@ class Toolbar extends React.Component<Props, {}> {
         </Badge>
 
         <Badge
-          badgeContent={this.props.editor!.setting!.measureDivision}
+          badgeContent={this.props.editor!.setting!.objectSize}
           color="primary"
           classes={{ badge: this.props.classes.badge }}
         >
-          <IconButton aria-label="Delete" onClick={this.handleClick}>
+          <IconButton
+            aria-label="Delete"
+            onClick={e =>
+              this.setState({ objectSizeAnchorEl: e.currentTarget })
+            }
+          >
             <MenuIcon />
           </IconButton>
         </Badge>
@@ -152,6 +159,28 @@ class Toolbar extends React.Component<Props, {}> {
               {value}
             </MenuItem>
           ))}
+        </Menu>
+
+        {/* 配置オブジェクトサイズ */}
+        <Menu
+          anchorEl={this.state.objectSizeAnchorEl}
+          open={Boolean(this.state.objectSizeAnchorEl)}
+          onClose={() => this.setState({ objectSizeAnchorEl: null })}
+        >
+          {Array.from({ length: 16 })
+            .fill(0)
+            .map((_, index) => index + 1)
+            .map((value, index) => (
+              <MenuItem
+                key={index}
+                onClick={(e: any) => {
+                  this.props.editor!.setting!.setObjectSize(value);
+                  this.setState({ objectSizeAnchorEl: null });
+                }}
+              >
+                {value}
+              </MenuItem>
+            ))}
         </Menu>
 
         <div className={classes.toggleContainer}>

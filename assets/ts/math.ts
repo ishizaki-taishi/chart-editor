@@ -9,3 +9,5 @@ export class Fraction {
 
   toMathjs = () => math.fraction(this.numerator, this.denominator);
 }
+
+export { default as Vector2 } from "./math/Vector2";

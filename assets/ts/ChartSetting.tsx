@@ -9,7 +9,8 @@ import {
   InputLabel,
   WithStyles,
   withStyles,
-  createStyles
+  createStyles,
+  Button
 } from "@material-ui/core";
 import { Editor } from "./stores/EditorStore";
 
@@ -144,22 +145,16 @@ class ChartSetting extends React.Component<Props, {}> {
             background: "#eee"
           }}
         >
-          {(() => {
-            const tl = Object.assign({}, editor.currentChart!.timeline);
-
-            tl.bpmChanges = editor.currentChart!.timeline.bpmChanges.map(t =>
-              Object.assign({}, t)
-            );
-            tl.lanePoints = editor.currentChart!.timeline.lanePoints.map(t =>
-              Object.assign({}, t)
-            );
-
-            for (const e of tl.bpmChanges) delete e.renderer;
-            for (const e of tl.lanePoints) delete e.renderer;
-
-            return JSON.stringify(tl, null, 2);
-          })()}
+          {editor.currentChart!.toJSON()}
         </div>
+
+        <Button
+          onClick={() => {
+            localStorage.setItem("chart", editor.currentChart!.toJSON());
+          }}
+        >
+          保存
+        </Button>
       </div>
     );
   }

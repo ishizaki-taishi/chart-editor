@@ -79,6 +79,10 @@ export default class Asset implements IStore {
         this.musicGameSystems.find(mgs => mgs.name === "ongeki")!
       );
     }
+
+    if (localStorage.getItem("chart")) {
+      Editor.instance!.currentChart!.load(localStorage.getItem("chart")!);
+    }
   }
 
   constructor(debugMode: boolean) {
