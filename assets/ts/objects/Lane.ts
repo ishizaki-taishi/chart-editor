@@ -7,8 +7,15 @@ type GUID = string;
 export default class Lane extends TimelineObject {
   points: GUID[] = [];
 
+  /**
+   * 分割数
+   */
+  division: number = 3;
+
   renderer: LaneRenderer | null = null;
 }
+
+import { Line, lineIntersect } from "../shapes/Line";
 
 import { Fraction, Vector2 } from "../math";
 
@@ -198,12 +205,13 @@ function getLines(points: LinePoint[], measures: Measure[]): LineInfo[] {
 
   return lines;
 }
+import Pixi from "../Pixi";
 
-interface Quad {
-  a: Vector2;
-  b: Vector2;
-  c: Vector2;
-  d: Vector2;
+import { Quad } from "../shapes/Quad";
+
+interface QuadAndIndex extends Quad {
+  horizontalIndex: number;
+  verticalIndex: number;
 }
 
 export class LaneRenderer extends PIXI.Sprite {
@@ -211,16 +219,125 @@ export class LaneRenderer extends PIXI.Sprite {
     super();
   }
 
-  laneDivision = 3;
-
-  getQuad(measureDivision: number, measureDivisionIndex: number): Quad {
-    return {
-      a: new Vector2(0, 0),
-      b: new Vector2(0, 0),
-      c: new Vector2(0, 0),
-      d: new Vector2(0, 0)
-    };
+  get laneDivision() {
+    return this.target.division;
   }
+
+  quadCache: QuadAndIndex[] = [];
+
+  getQuad(
+    measure: Measure,
+    horizontal: Fraction,
+    vertical: Fraction
+  ): Quad | null {
+    // 選択中の小節に乗っているレーン
+    const targetMeasureLines = this.linesCache.filter(
+      ({ measure: _measure }) => _measure === measure
+    );
+
+    // y 軸のライン
+    const yLines: Line[] = [];
+    // x 軸のライン
+    const xLines: Line[][] = [];
+
+    // console.log(targetMeasureLines);
+    // 縦
+    {
+      for (var i = 0; i < 2; ++i) {
+        const y =
+          measure!.y +
+          (measure!.height / vertical.denominator) * (vertical.numerator + i);
+
+        const measureLine: Line = {
+          start: new Vector2(measure!.x, y),
+          end: new Vector2(measure!.x + measure!.width, y)
+        };
+
+        yLines.push(measureLine);
+      }
+    }
+
+    // 横
+
+    for (var i = 0; i < 2; ++i) {
+      xLines[i] = [];
+
+      for (const line of targetMeasureLines) {
+        const linee: Line = {
+          start: new Vector2(
+            line.start.point.x -
+              line.start.width / 2 +
+              (line.start.width / horizontal.denominator) *
+                (horizontal.numerator + i),
+            line.start.point.y
+          ),
+          end: new Vector2(
+            line.end.point.x -
+              line.end.width / 2 +
+              (line.end.width / horizontal.denominator) *
+                (horizontal.numerator + i),
+            line.end.point.y
+          )
+        };
+        /*
+        Pixi.debugGraphics!.lineStyle(4, 0xff00ff)
+          .moveTo(linee.start.x, linee.start.y)
+          .lineTo(linee.end.x, linee.end.y);
+*/
+        xLines[i].push(linee);
+      }
+    }
+
+    //  return null;
+
+    // 横
+    for (let j = 0; j < xLines[0].length; ++j) {
+      const xLine1 = xLines[0][j];
+      const xLine2 = xLines[1][j];
+
+      const xll1 = xLine1;
+      const xll2 = xLine2;
+
+      var ret1 = lineIntersect(xll1, yLines[0]);
+      var ret2 = lineIntersect(xll2, yLines[0]);
+      var ret3 = lineIntersect(xll1, yLines[1]);
+      var ret4 = lineIntersect(xll2, yLines[1]);
+      /*
+      Pixi.debugGraphics!.lineStyle(4, 0xff00ff, 0.3)
+        .moveTo(yLines[0].start.x, yLines[0].start.y)
+        .lineTo(yLines[0].end.x, yLines[0].end.y);
+
+      Pixi.debugGraphics!.lineStyle(4, 0xff00ff, 0.3)
+        .moveTo(yLines[1].start.x, yLines[1].start.y)
+        .lineTo(yLines[1].end.x, yLines[1].end.y);
+
+      Pixi.debugGraphics!.lineStyle(4, 0xff00ff)
+        .moveTo(xll1.start.x, xll1.start.y)
+        .lineTo(xll1.end.x, xll1.end.y);
+
+      Pixi.debugGraphics!.lineStyle(4, 0xff00ff)
+        .moveTo(xll2.start.x, xll2.start.y)
+        .lineTo(xll2.end.x, xll2.end.y);
+
+      if (ret1) Pixi.instance!.drawTempText("1", ret1.x, ret1.y);
+      if (ret2) Pixi.instance!.drawTempText("2", ret2.x, ret2.y);
+      if (ret3) Pixi.instance!.drawTempText("3", ret3.x, ret3.y);
+      if (ret4) Pixi.instance!.drawTempText("4", ret4.x, ret4.y);
+*/
+      console.log(ret1, ret2, ret3, ret4);
+      if (ret1 && ret2 && ret3 && ret4) {
+        return {
+          a: ret1,
+          b: ret2,
+          c: ret3,
+          d: ret4
+        };
+      }
+    }
+    return null;
+  }
+
+  private linesCache: LineInfo[] = [];
 
   update(
     graphics: PIXI.Graphics,
@@ -228,7 +345,7 @@ export class LaneRenderer extends PIXI.Sprite {
     measures: Measure[],
     drawHorizontalLineTargetMeasure?: Measure,
     md = 4
-  ) {
+  ): QuadAndIndex[] {
     const lines = getLines(
       this.target.points.map(
         point => lanePoints.find(lanePoint => lanePoint.guid === point)!
@@ -236,17 +353,7 @@ export class LaneRenderer extends PIXI.Sprite {
       measures
     );
 
-    interface Line {
-      start: Vector2;
-      end: Vector2;
-    }
-
-    function drawLine(line: Line, lineWidth: number, color: number) {
-      graphics
-        .lineStyle(lineWidth, color)
-        .moveTo(line.start.x, line.start.y)
-        .lineTo(line.end.x, line.end.y);
-    }
+    this.linesCache = lines;
 
     for (const line of lines) {
       graphics
@@ -283,95 +390,14 @@ export class LaneRenderer extends PIXI.Sprite {
       }
     }
 
-    // test
     {
-      /*
-      var judgeIentersected = function(ax:, ay, bx, by, cx, cy, dx, dy) {
-        var ta = (cx - dx) * (ay - cy) + (cy - dy) * (cx - ax);
-        var tb = (cx - dx) * (by - cy) + (cy - dy) * (cx - bx);
-        var tc = (ax - bx) * (cy - ay) + (ay - by) * (ax - cx);
-        var td = (ax - bx) * (dy - ay) + (ay - by) * (ax - dx);
-      
-        return tc * td < 0 && ta * tb < 0;
-        // return tc * td <= 0 && ta * tb <= 0; // 端点を含む場合
-      };
+      const resultQuads: QuadAndIndex[] = [];
 
-      */
-
-      if (drawHorizontalLineTargetMeasure) {
-        const line_intersect = (
-          x1: number,
-          y1: number,
-          x2: number,
-          y2: number,
-          x3: number,
-          y3: number,
-          x4: number,
-          y4: number
-        ) => {
-          // Check if none of the lines are of length 0
-          if ((x1 === x2 && y1 === y2) || (x3 === x4 && y3 === y4)) {
-            return false;
-          }
-
-          var denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-
-          // Lines are parallel
-          if (denominator === 0) {
-            return false;
-          }
-
-          let ua =
-            ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator;
-          let ub =
-            ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator;
-
-          // is the intersection along the segments
-          if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
-            return false;
-          }
-
-          // Return a object with the x and y coordinates of the intersection
-          let x = x1 + ua * (x2 - x1);
-          let y = y1 + ua * (y2 - y1);
-
-          return { x, y };
-        };
-
-        var getIntersectionLineSegments = function(point1: Line, point2: Line) {
-          const add = Vector2.sub(point1.end, point1.start)
-            .normalize()
-            .multiplyScalar(4);
-
-          point1.start.x -= add.x;
-          point1.start.y -= add.y;
-
-          point1.end.x += add.x;
-          point1.end.y += add.y;
-
-          // drawLine(point1, 2, 0x00ff00);
-          // drawLine(point2, 2, 0x00ffff);
-
-          const nn = line_intersect(
-            point1.start.x,
-            point1.start.y,
-            point1.end.x,
-            point1.end.y,
-            point2.start.x,
-            point2.start.y,
-            point2.end.x,
-            point2.end.y
-          );
-
-          if (!nn) return false;
-
-          return new Vector2(nn!.x, nn!.y);
-        };
-
+      if (drawHorizontalLineTargetMeasure && targetMeasureLines.length) {
         let pp = 0;
 
         // 対象の小節に存在してるレーン中間点の y 座標一覧
-        var b3 = Array.from(
+        var b3: number[] = Array.from(
           new Set(
             targetMeasureLines
               .map(line => [line.start.point.y, line.end.point.y])
@@ -379,12 +405,12 @@ export class LaneRenderer extends PIXI.Sprite {
           )
         );
 
-        console.log(b3);
+        // console.log(b3);
 
         // y 軸のライン
         const yLines: Line[] = [];
         // x 軸のライン
-        const xLines: Line[] = [];
+        const xLines: Line[][] = [];
 
         // 縦
         for (let i = 0; i < md + 1; ++i) {
@@ -407,7 +433,9 @@ export class LaneRenderer extends PIXI.Sprite {
         }
 
         // 横
-        for (let j = 0; j < this.laneDivision; ++j) {
+        for (let j = 0; j < this.laneDivision + 1; ++j) {
+          xLines[j] = [];
+
           for (const line of targetMeasureLines) {
             const linee: Line = {
               start: new Vector2(
@@ -423,7 +451,7 @@ export class LaneRenderer extends PIXI.Sprite {
                 line.end.point.y
               )
             };
-            xLines.push(linee);
+            xLines[j].push(linee);
           }
         }
 
@@ -432,97 +460,66 @@ export class LaneRenderer extends PIXI.Sprite {
           const yLine1 = yLines[i];
           const yLine2 = yLines[i + 1];
 
-          drawLine(yLine1, 4, 0xff00ff);
-          // 横
-          for (let j = 0; j < this.laneDivision; ++j) {
-            const xLine1 = xLines[j];
-            const xLine2 = xLines[j + 1];
+          const yLines2: Line[] = [yLine1];
 
-            var ret1 = getIntersectionLineSegments(yLine1, xLine1);
-            var ret2 = getIntersectionLineSegments(yLine1, xLine2);
-            var ret3 = getIntersectionLineSegments(yLine2, xLine1);
-            var ret4 = getIntersectionLineSegments(yLine2, xLine2);
+          // 小節縦分割線 2 つの間に含まれている分割線
 
-            console.log(ret1, ret2, ret3, ret4);
+          const f = b3.filter(f => f > yLine1.start.y && f < yLine2.start.y);
 
-            // drawLine(xLine1, 4, 0xffff00);
-          }
-        }
+          //          console.log("split", f.length);
 
-        /*
-
-        for (let i = 0; i <  1; ++i) {
-          for (const line of targetMeasureLines) {
-            // 小節内分割ライン
-
-            const y =
-              drawHorizontalLineTargetMeasure!.y +
-              (drawHorizontalLineTargetMeasure!.height / md) * i;
-
-            const measureLine: Line = {
-              start: new Vector2(drawHorizontalLineTargetMeasure!.x, y),
-              end: new Vector2(
-                drawHorizontalLineTargetMeasure!.x +
-                  drawHorizontalLineTargetMeasure!.width,
-                y
-              )
+          for (const ff of f) {
+            const line = {
+              start: new Vector2(yLine1.start.x, ff),
+              end: new Vector2(yLine1.end.x, ff)
             };
 
-            for (var j = 0; j < this.laneDivision + 1; ++j) {
-              const linee: Line = {
-                start: new Vector2(
-                  line.start.point.x -
-                    line.start.width / 2 +
-                    (line.start.width / this.laneDivision) * j,
-                  line.start.point.y
-                ),
-                end: new Vector2(
-                  line.end.point.x -
-                    line.end.width / 2 +
-                    (line.end.width / this.laneDivision) * j,
-                  line.end.point.y
-                )
-              };
+            //drawLine(line, 10, 0xffffff);
 
-              //drawLine(linee, 1, 0xffffff);
+            yLines2.push(line);
+          }
 
-              var ret = getIntersectionLineSegments(linee, measureLine);
+          yLines2.push(yLine2);
 
-              if (ret) {
-                //   console.log(ret);
+          for (var kk = 0; kk < yLines2.length - 1; ++kk) {
+            const yLine1 = yLines2[kk];
+            const yLine2 = yLines2[kk + 1];
 
-                graphics.drawCircle(ret.x, ret.y, 10);
+            //drawLine(yLine1, 4, 0xff00ff);
 
-                graphics.beginFill(0xf1c40f); // Yellow
+            // 横
+            for (let j = 0; j < this.laneDivision; ++j) {
+              const xLine1 = xLines[j];
+              const xLine2 = xLines[j + 1];
 
-                // Draw a polygon to look like a star
-                graphics.drawPolygon([
-                  ret.x,
-                  ret.y, // Starting x, y coordinates for the star
-                  ret.x + 20,
-                  ret.y, // Star is drawn in a clockwork motion
-                  ret.x + 20,
-                  ret.y + 20,
-                  ret.x,
-                  ret.y + 20
-                ]);
+              for (var k = 0; k < xLine1.length; ++k) {
+                const xll1 = xLine1[k];
+                const xll2 = xLine2[k];
 
-                graphics.endFill();
+                var ret1 = lineIntersect(yLine1, xll1);
+                var ret2 = lineIntersect(yLine1, xll2);
+                var ret3 = lineIntersect(yLine2, xll1);
+                var ret4 = lineIntersect(yLine2, xll2);
 
-                ++pp;
+                if (ret1 && ret2 && ret3 && ret4) {
+                  resultQuads.push({
+                    a: ret1,
+                    b: ret2,
+                    c: ret3,
+                    d: ret4,
+                    horizontalIndex: j,
+                    verticalIndex: i
+                  });
+                }
               }
             }
           }
         }
-
-        */
-
-        console.log(pp);
       }
+
+      this.quadCache = resultQuads;
+
+      return resultQuads;
     }
-
-    this.test();
   }
-
-  test() {}
 }

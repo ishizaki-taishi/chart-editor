@@ -255,9 +255,11 @@ export default class Chart implements IStore {
     tl.bpmChanges = chart.timeline.bpmChanges.map(t => Object.assign({}, t));
     tl.lanePoints = chart.timeline.lanePoints.map(t => Object.assign({}, t));
     tl.lanes = chart.timeline.lanes.map(t => Object.assign({}, t));
+    tl.notes = chart.timeline.notes.map(t => Object.assign({}, t));
 
     for (const e of tl.bpmChanges) delete e.renderer;
     for (const e of tl.lanePoints) delete e.renderer;
+    for (const e of tl.notes) delete e.renderer;
     for (const e of tl.lanes) {
       delete e.renderer;
       // e.points = []; //e.pointsIndex = e.points.map(point => point.);

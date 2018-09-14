@@ -15,10 +15,12 @@ import * as PIXI from "pixi.js";
 import { observer, inject } from "mobx-react";
 
 import Lane, { LaneRenderer } from "./objects/Lane";
+import Note, { NoteRenderer } from "./objects/Note";
 
 import Measure from "./objects/Measure";
 import { guid } from "./util";
 import { containsQuad } from "./utils/contains";
+import { drawQuad, sortQuadPoint } from "./utils/drawQuad";
 
 import Vector2 from "./math/Vector2";
 
@@ -59,8 +61,6 @@ export default class Pixi extends React.Component<IMainProps, {}> {
 
     const app = this.app;
 
-    //    app.stage.interactive = true;
-
     const graphics = (this.graphics = new PIXI.Graphics());
 
     app.stage.addChild(graphics);
@@ -93,6 +93,42 @@ export default class Pixi extends React.Component<IMainProps, {}> {
 
   texts: PIXI.Text[] = [];
 
+  private temporaryTexts: PIXI.Text[] = [];
+
+  static debugGraphics?: PIXI.Graphics;
+
+  static instance?: Pixi;
+
+  drawTempText(
+    text: string,
+    x: number,
+    y: number,
+    option?: PIXI.TextStyleOptions
+  ) {
+    const t = new PIXI.Text(
+      text,
+      Object.assign(
+        {
+          fontSize: 20,
+          fill: 0xffffff,
+          dropShadow: true,
+          dropShadowBlur: 8,
+          dropShadowColor: "#000000",
+          dropShadowDistance: 0
+        },
+        option
+      )
+    );
+    t.x = x;
+    t.y = y;
+
+    t.anchor.x = 0.5;
+    t.anchor.y = 0.5;
+
+    this.graphics!.addChild(t);
+    this.temporaryTexts.push(t);
+  }
+
   measures: Measure[] = [];
 
   prev: number = 0;
@@ -102,10 +138,17 @@ export default class Pixi extends React.Component<IMainProps, {}> {
   private renderCanvas() {
     if (!this.app) return;
 
+    Pixi.instance = this;
     const graphics = this.graphics!;
+    Pixi.debugGraphics = graphics;
 
-    const chart = this.props.editor!.currentChart!;
-    const setting = this.props.editor!.setting!;
+    // 一時テキストを削除
+    for (const temp of this.temporaryTexts) graphics.removeChild(temp);
+    this.temporaryTexts = [];
+
+    const editor = this.props.editor!;
+    const chart = editor.currentChart!;
+    const setting = editor.setting!;
 
     const w = this.app!.renderer.width;
     const h = this.app!.renderer.height;
@@ -360,6 +403,10 @@ export default class Pixi extends React.Component<IMainProps, {}> {
       bpm.renderer.update(graphics, lane);
     }
 
+    let targetLane: Lane | null = null;
+    let targetLaneHorizontalIndex: number | null = null;
+    let targetLaneVerticalIndex: number | null = null;
+
     // レーン描画
     for (const lane of chart.timeline.lanes) {
       if (!lane.renderer) continue;
@@ -370,13 +417,90 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         graphics.addChild(lane.renderer!);
       }
 
-      lane.renderer.update(
+      const quads = lane.renderer.update(
         graphics,
         chart.timeline.lanePoints,
         this.measures,
         targetMeasure,
         setting.measureDivision
       );
+
+      for (const quad of quads) {
+        let color = 0xff00ff;
+
+        const p4 = sortQuadPoint(quad.a, quad.b, quad.c, quad.d);
+
+        const _p = new Vector2(mousePosition.x - graphics.x, mousePosition.y);
+
+        if (containsQuad(_p, p4[0], p4[1], p4[2], p4[3])) {
+          color = 0xffff00;
+
+          targetLane = lane;
+          targetLaneHorizontalIndex = quad.horizontalIndex;
+          targetLaneVerticalIndex = quad.verticalIndex;
+
+          drawQuad(graphics, p4[0], p4[1], p4[2], p4[3], color);
+          this.drawTempText(
+            `${quad.horizontalIndex}/${quad.verticalIndex}`,
+            p4[0].x,
+            p4[0].y,
+            {}
+          );
+        }
+      }
+    }
+
+    // ノート描画
+    for (const note of chart.timeline.notes) {
+      if (!note.renderer) continue;
+
+      if (!note.renderer.parent) {
+        graphics.addChild(note.renderer);
+      }
+      note.renderer.update(
+        graphics,
+        chart.timeline.lanes.find(lane => lane.guid === note.lane)!,
+        this.measures[note.measureIndex]
+      );
+    }
+
+    // レーン選択中ならノートを配置する
+    if (
+      targetMeasure &&
+      targetLane &&
+      // setting.editMode === EditMode.Add &&
+      setting.editObjectCategory === ObjectCategory.Note
+    ) {
+      const note = {
+        guid: guid(),
+        horizontalSize: 1,
+        horizontalPosition: new Fraction(
+          targetLaneHorizontalIndex!,
+          targetLane.division
+        ),
+        measureIndex: this.measures.findIndex(_ => _ === targetMeasure)!,
+        measurePosition: new Fraction(
+          targetLaneVerticalIndex!,
+          setting.measureDivision
+        ),
+        color: 0xffffff,
+
+        lane: targetLane.guid,
+        connectable: true
+      } as Note;
+      note.renderer = new NoteRenderer(note);
+
+      if (isClick) {
+        chart.timeline.addNote(note);
+      } else {
+        graphics.addChild(note.renderer);
+        note.renderer.update(
+          graphics,
+          targetLane,
+          this.measures[note.measureIndex]
+        );
+        graphics.removeChild(note.renderer);
+      }
     }
 
     const tempPoint = new PIXI.Point();
@@ -402,8 +526,6 @@ export default class Pixi extends React.Component<IMainProps, {}> {
       return [0, 0];
     }
 
-    const editor = this.props.editor!;
-
     // 接続モード && レーン編集
     if (
       targetMeasure &&
@@ -421,6 +543,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
 
           chart.timeline.setLanes([
             {
+              guid: guid(),
               points: chart.timeline.lanePoints.map(p => p.guid)
             } as Lane
           ]);
@@ -495,56 +618,6 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         graphics.removeChild(aa.renderer!);
       }
     }
-
-    if (targetMeasure) {
-      const s = targetMeasure;
-
-      for (let i = 0; i < this.props.editor!.setting!.measureDivision; ++i) {
-        //        targetMeasure.
-      }
-    }
-
-    /*
-
-    const _a = new Vector2(300, 30);
-    const _b = new Vector2(100, 330);
-    const _c = new Vector2(400, 230);
-    const _d = new Vector2(660, 100);
-    const _p = new Vector2(mousePosition.x - graphics.x, mousePosition.y);
-
-    [_a, _b, _c, _d].forEach(_ => (_.x = _.x + 1000));
-
-    let we = 3;
-    if (containsQuad(_p, _a, _b, _c, _d)) {
-      we = 10;
-    }
-
-    graphics
-      .lineStyle(we, 0xff00ff)
-      .moveTo(_a.x, _a.y)
-      .lineTo(_b.x, _b.y);
-    graphics
-      .lineStyle(we, 0xff00ff)
-      .moveTo(_b.x, _b.y)
-      .lineTo(_c.x, _c.y);
-    graphics
-      .lineStyle(we, 0xff00ff)
-      .moveTo(_c.x, _c.y)
-      .lineTo(_d.x, _d.y);
-    graphics
-      .lineStyle(we, 0xff00ff)
-      .moveTo(_d.x, _d.y)
-      .lineTo(_a.x, _a.y);
-    graphics.drawCircle(_p.x, _p.y, 10);
-
-    /*
-    for (const lanePoint of this.props.editor!.currentChart!.timeline
-      .lanePoints) {
-      if (lanePoint.renderer!.containsPoint(mousePosition)) {
-        console.log("focus", lanePoint);
-      }
-    }
-    */
   }
 
   /**

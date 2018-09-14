@@ -1,6 +1,7 @@
 import Lane from "./Lane";
 import LanePoint from "./LanePoint";
 import BPMChange from "./BPMChange";
+import Note from "./Note";
 import { observable, action } from "mobx";
 
 export default class Timeline {
@@ -15,6 +16,12 @@ export default class Timeline {
 
   @observable
   lanePoints: LanePoint[] = [];
+
+  @observable
+  notes: Note[] = [];
+
+  @action
+  addNote = (note: Note) => this.notes.push(note);
 
   @action
   addLanePoint = (value: LanePoint) => this.lanePoints.push(value);
