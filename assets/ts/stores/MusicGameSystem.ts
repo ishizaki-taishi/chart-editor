@@ -6,7 +6,7 @@ export interface LaneTemplate {
 interface MusicGameSystem {
   name: string;
   laneTemplates: LaneTemplate[];
-  noteTypes: { name: string; color: string }[];
+  noteTypes: { name: string; color: string; renderer: string }[];
 }
 
 export default MusicGameSystem;

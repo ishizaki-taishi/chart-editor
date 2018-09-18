@@ -20,6 +20,10 @@ class Vector2 {
     return this.multiplyScalar(1 / scalar);
   }
 
+  static add(a: Vector2, b: Vector2) {
+    return new Vector2(a.x + b.x, a.y + b.y);
+  }
+
   public static sub(a: Vector2, b: Vector2) {
     return new Vector2(a.x - b.x, a.y - b.y);
   }

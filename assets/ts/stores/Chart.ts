@@ -14,6 +14,7 @@ import Timeline from "../objects/Timeline";
 import BPMChange, { BPMRenderer } from "../objects/BPMChange";
 import LanePoint, { LanePointRenderer } from "../objects/LanePoint";
 import { LaneRenderer } from "../objects/Lane";
+import NoteRenderer from "../objects/NoteRenderer";
 
 export default class Chart implements IStore {
   @observable
@@ -36,6 +37,21 @@ export default class Chart implements IStore {
       lanePoint.renderer = new LanePointRenderer(lanePoint);
       this.timeline.addLanePoint(lanePoint);
     }
+
+    for (const note of chart.timeline.notes) {
+      note.measurePosition = new Fraction(
+        note.measurePosition.numerator,
+        note.measurePosition.denominator
+      );
+      note.horizontalPosition = new Fraction(
+        note.horizontalPosition.numerator,
+        note.horizontalPosition.denominator
+      );
+
+      //  note.renderer = new NoteRenderer(note);
+      this.timeline.addNote(note);
+    }
+
     for (const lane of chart.timeline.lanes) {
       /*
       lane.measurePosition = new Fraction(
@@ -259,7 +275,7 @@ export default class Chart implements IStore {
 
     for (const e of tl.bpmChanges) delete e.renderer;
     for (const e of tl.lanePoints) delete e.renderer;
-    for (const e of tl.notes) delete e.renderer;
+    // for (const e of tl.notes) delete e.renderer;
     for (const e of tl.lanes) {
       delete e.renderer;
       // e.points = []; //e.pointsIndex = e.points.map(point => point.);

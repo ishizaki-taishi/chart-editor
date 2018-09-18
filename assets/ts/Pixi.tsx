@@ -15,7 +15,8 @@ import * as PIXI from "pixi.js";
 import { observer, inject } from "mobx-react";
 
 import Lane, { LaneRenderer } from "./objects/Lane";
-import Note, { NoteRenderer } from "./objects/Note";
+import Note from "./objects/Note";
+import NoteRenderer from "./objects/NoteRenderer";
 
 import Measure from "./objects/Measure";
 import { guid } from "./util";
@@ -450,14 +451,35 @@ export default class Pixi extends React.Component<IMainProps, {}> {
       }
     }
 
+    const getLane = (note: Note) => {
+      return chart.timeline.lanes.find(lane => lane.guid === note.lane)!;
+    };
+    const getMeasure = (note: Note) => this.measures[note.measureIndex];
+
+    const getNoteRenderer = (note: Note) => {
+      const noteType = chart.musicGameSystem!.noteTypes.find(
+        noteType => noteType.name === note.type
+      )!;
+
+      if (noteType.renderer === "default") {
+        return NoteRenderer;
+      }
+
+      // note.type;
+    };
+
     // ノート描画
     for (const note of chart.timeline.notes) {
+      /*
       if (!note.renderer) continue;
 
       if (!note.renderer.parent) {
         graphics.addChild(note.renderer);
       }
-      note.renderer.update(
+      */
+
+      getNoteRenderer(note)!.render(
+        note,
         graphics,
         chart.timeline.lanes.find(lane => lane.guid === note.lane)!,
         this.measures[note.measureIndex]
@@ -468,7 +490,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
     if (
       targetMeasure &&
       targetLane &&
-      // setting.editMode === EditMode.Add &&
+      setting.editMode === EditMode.Add &&
       setting.editObjectCategory === ObjectCategory.Note
     ) {
       const note = {
@@ -485,35 +507,38 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         ),
         color: 0xffffff,
 
+        type: chart.musicGameSystem!.noteTypes[setting.editNoteTypeIndex].name,
+
         lane: targetLane.guid,
         connectable: true
       } as Note;
-      note.renderer = new NoteRenderer(note);
+      // note.renderer = new NoteRenderer(note);
 
       if (isClick) {
         chart.timeline.addNote(note);
       } else {
-        graphics.addChild(note.renderer);
-        note.renderer.update(
+        // graphics.addChild(note.renderer);
+        getNoteRenderer(note)!.render(
+          note,
           graphics,
           targetLane,
           this.measures[note.measureIndex]
         );
-        graphics.removeChild(note.renderer);
+        //graphics.removeChild(note.renderer);
       }
     }
 
     const tempPoint = new PIXI.Point();
-    function normalizeContainsPoint(_this: PIXI.Sprite, point: PIXI.Point) {
-      _this.worldTransform.applyInverse(point, tempPoint);
+    function normalizeContainsPoint(__this: PIXI.Sprite, point: PIXI.Point) {
+      __this.worldTransform.applyInverse(point, tempPoint);
 
-      const width: number = (_this as any)._texture.orig.width;
-      const height: number = (_this as any)._texture.orig.height;
-      const x1 = -width * _this.anchor.x;
+      const width: number = (__this as any)._texture.orig.width;
+      const height: number = (__this as any)._texture.orig.height;
+      const x1 = -width * __this.anchor.x;
       let y1 = 0;
 
       if (tempPoint.x >= x1 && tempPoint.x < x1 + width) {
-        y1 = -height * _this.anchor.y;
+        y1 = -height * __this.anchor.y;
 
         if (tempPoint.y >= y1 && tempPoint.y < y1 + height) {
           const x = (tempPoint.x - x1) / (x1 + width);
@@ -544,6 +569,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
           chart.timeline.setLanes([
             {
               guid: guid(),
+              division: 3,
               points: chart.timeline.lanePoints.map(p => p.guid)
             } as Lane
           ]);
@@ -551,6 +577,29 @@ export default class Pixi extends React.Component<IMainProps, {}> {
           chart.timeline.lanes[0].renderer = new LaneRenderer(
             chart.timeline.lanes[0]
           );
+        }
+      }
+    }
+
+    // 接続モード
+    if (
+      // isClick &&
+      setting.editMode === EditMode.Select &&
+      setting.editObjectCategory === ObjectCategory.Note
+    ) {
+      for (const note of chart.timeline.notes) {
+        const bounds = getNoteRenderer(note)!.getBounds(
+          note,
+          getLane(note),
+          getMeasure(note)
+        );
+
+        if (bounds.contains(mousePosition.x - graphics.x, mousePosition.y)) {
+          graphics
+            .lineStyle(0)
+            .beginFill(0x0099ff, 0.3)
+            .drawRect(bounds.x, bounds.y, bounds.width, bounds.height)
+            .endFill();
         }
       }
     }
@@ -585,7 +634,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
 
       const p = (editor.setting!.objectSize - 1) / maxObjectSize / 2;
 
-      const aa = {
+      const newLanePoint = {
         measureIndex: targetMeasure.index,
         measurePosition: new Fraction(
           vlDiv - 1 - clamp(Math.floor(ny * vlDiv), 0, vlDiv - 1),
@@ -593,7 +642,6 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         ),
         guid: guid(),
         color: Number(laneT.color),
-
         horizontalSize: editor.setting!.objectSize,
         horizontalPosition: new Fraction(
           clamp(
@@ -605,17 +653,20 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         )
       } as LanePoint;
 
-      aa.renderer = new LanePointRenderer(aa);
+      newLanePoint.renderer = new LanePointRenderer(newLanePoint);
 
       //lane.renderer.update(graphics, this.measures);
 
       if (isClick) {
-        this.props.editor!.currentChart!.timeline.addLanePoint(aa);
+        this.props.editor!.currentChart!.timeline.addLanePoint(newLanePoint);
       } else {
         // プレビュー
-        graphics.addChild(aa.renderer!);
-        aa.renderer.update(graphics, this.measures[aa.measureIndex]);
-        graphics.removeChild(aa.renderer!);
+        graphics.addChild(newLanePoint.renderer!);
+        newLanePoint.renderer.update(
+          graphics,
+          this.measures[newLanePoint.measureIndex]
+        );
+        graphics.removeChild(newLanePoint.renderer!);
       }
     }
   }

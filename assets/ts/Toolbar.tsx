@@ -37,10 +37,10 @@ enum ObjectCategory {
 }
 
 import ToggleButton from "@material-ui/lab/ToggleButton";
-import ToggleButtonGroup from "@material-ui/lab/ToggleButton/ToggleButtonGroup";
+import ToggleButtonGroup from "@material-ui/lab/ToggleButtonGroup";
 
 import { IconButton, Badge, Tab } from "@material-ui/core";
-import AddIcon from "@material-ui/icons/add";
+import AddIcon from "@material-ui/icons/Add";
 import MenuIcon from "@material-ui/icons/menu";
 import CreateIcon from "@material-ui/icons/create";
 import ClearIcon from "@material-ui/icons/clear";
@@ -65,9 +65,9 @@ const styles = (theme: Theme) =>
       padding: `${theme.spacing.unit}px ${theme.spacing.unit * 2}px`,
       display: "flex",
       alignItems: "center",
-      justifyContent: "flex-start",
+      justifyContent: "flex-start"
       // margin: `${theme.spacing.unit}px 0`,
-      background: theme.palette.background.default
+      // background: theme.palette.background.default
     }
   });
 
@@ -187,10 +187,9 @@ class Toolbar extends React.Component<Props, {}> {
           <ToggleButtonGroup
             value={this.props.editor!.setting!.editMode}
             exclusive
-            onChange={(v: any) => {
-              if (v === null) return;
-
-              this.props.editor!.setting!.setEditMode(v as EditMode);
+            onChange={(_, value: EditMode | null) => {
+              if (value === null) return;
+              this.props.editor!.setting!.setEditMode(value);
             }}
           >
             <ToggleButton value={EditMode.Select}>
@@ -212,10 +211,9 @@ class Toolbar extends React.Component<Props, {}> {
           <ToggleButtonGroup
             value={this.props.editor!.setting!.editObjectCategory}
             exclusive
-            onChange={v => {
-              if (v === null) return;
-              this.props.editor!.setting!.setEditObjectCategory(v as any);
-              //              this.setState({ objectIndex: v });
+            onChange={(_, value: ObjectCategory | null) => {
+              if (value === null) return;
+              this.props.editor!.setting!.setEditObjectCategory(value);
             }}
           >
             <ToggleButton value={ObjectCategory.Note}>

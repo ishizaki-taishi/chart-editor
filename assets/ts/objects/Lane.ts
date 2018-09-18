@@ -2,7 +2,7 @@ import TimelineObject from "./TimelineObject";
 import LanePoint from "./LanePoint";
 import Measure from "./Measure";
 
-type GUID = string;
+import { GUID } from "../util";
 
 export default class Lane extends TimelineObject {
   points: GUID[] = [];
@@ -229,33 +229,33 @@ export class LaneRenderer extends PIXI.Sprite {
     measure: Measure,
     horizontal: Fraction,
     vertical: Fraction
-  ): Quad | null {
+  ): LinePointInfo | null {
     // 選択中の小節に乗っているレーン
     const targetMeasureLines = this.linesCache.filter(
       ({ measure: _measure }) => _measure === measure
     );
 
     // y 軸のライン
-    const yLines: Line[] = [];
+    // const yLines: Line[] = [];
     // x 軸のライン
     const xLines: Line[][] = [];
 
     // console.log(targetMeasureLines);
     // 縦
-    {
-      for (var i = 0; i < 2; ++i) {
-        const y =
-          measure!.y +
-          (measure!.height / vertical.denominator) * (vertical.numerator + i);
+    // {
+    //for (var i = 0; i < 1; ++i) {
+    const y =
+      measure!.y +
+      (measure!.height / vertical.denominator) * (vertical.numerator + 1);
 
-        const measureLine: Line = {
-          start: new Vector2(measure!.x, y),
-          end: new Vector2(measure!.x + measure!.width, y)
-        };
+    const measureLine: Line = {
+      start: new Vector2(measure!.x, y),
+      end: new Vector2(measure!.x + measure!.width, y)
+    };
 
-        yLines.push(measureLine);
-      }
-    }
+    const yLines = measureLine;
+    //}
+    // }
 
     // 横
 
@@ -298,19 +298,19 @@ export class LaneRenderer extends PIXI.Sprite {
       const xll1 = xLine1;
       const xll2 = xLine2;
 
-      var ret1 = lineIntersect(xll1, yLines[0]);
-      var ret2 = lineIntersect(xll2, yLines[0]);
-      var ret3 = lineIntersect(xll1, yLines[1]);
-      var ret4 = lineIntersect(xll2, yLines[1]);
+      var ret1 = lineIntersect(xll1, yLines);
+      var ret2 = lineIntersect(xll2, yLines);
       /*
-      Pixi.debugGraphics!.lineStyle(4, 0xff00ff, 0.3)
-        .moveTo(yLines[0].start.x, yLines[0].start.y)
-        .lineTo(yLines[0].end.x, yLines[0].end.y);
 
-      Pixi.debugGraphics!.lineStyle(4, 0xff00ff, 0.3)
+      Pixi.debugGraphics!.lineStyle(8, 0xffffff, 0.2)
+        .moveTo(yLines.start.x, yLines.start.y)
+        .lineTo(yLines.end.x, yLines.end.y);
+
+      Pixi.debugGraphics!.lineStyle(8, 0xffffff, 0.2)
         .moveTo(yLines[1].start.x, yLines[1].start.y)
         .lineTo(yLines[1].end.x, yLines[1].end.y);
-
+        */
+      /*
       Pixi.debugGraphics!.lineStyle(4, 0xff00ff)
         .moveTo(xll1.start.x, xll1.start.y)
         .lineTo(xll1.end.x, xll1.end.y);
@@ -319,18 +319,18 @@ export class LaneRenderer extends PIXI.Sprite {
         .moveTo(xll2.start.x, xll2.start.y)
         .lineTo(xll2.end.x, xll2.end.y);
 
+      /*
+
       if (ret1) Pixi.instance!.drawTempText("1", ret1.x, ret1.y);
       if (ret2) Pixi.instance!.drawTempText("2", ret2.x, ret2.y);
       if (ret3) Pixi.instance!.drawTempText("3", ret3.x, ret3.y);
       if (ret4) Pixi.instance!.drawTempText("4", ret4.x, ret4.y);
-*/
-      console.log(ret1, ret2, ret3, ret4);
-      if (ret1 && ret2 && ret3 && ret4) {
+      */
+      // console.log(ret1, ret2);
+      if (ret1 && ret2) {
         return {
-          a: ret1,
-          b: ret2,
-          c: ret3,
-          d: ret4
+          point: Vector2.add(ret1, ret2).multiplyScalar(0.5),
+          width: ret2.x - ret1.x
         };
       }
     }
@@ -353,15 +353,16 @@ export class LaneRenderer extends PIXI.Sprite {
       measures
     );
 
+    // キャッシュしておく
     this.linesCache = lines;
 
     for (const line of lines) {
       graphics
-        .lineStyle(1, 0xff00ff)
+        .lineStyle(1, 0xffffff)
         .moveTo(line.start.point.x - line.start.width / 2, line.start.point.y)
         .lineTo(line.end.point.x - line.end.width / 2, line.end.point.y);
       graphics
-        .lineStyle(1, 0xff00ff)
+        .lineStyle(1, 0xffffff)
         .moveTo(line.start.point.x + line.start.width / 2, line.start.point.y)
         .lineTo(line.end.point.x + line.end.width / 2, line.end.point.y);
     }
