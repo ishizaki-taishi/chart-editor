@@ -25,6 +25,9 @@ import { drawQuad, sortQuadPoint } from "./utils/drawQuad";
 
 import Vector2 from "./math/Vector2";
 
+import NoteLine from "./objects/NoteLine";
+import NoteLineRenderer from "./objects/NoteLineRenderer";
+
 @inject("editor")
 @observer
 export default class Pixi extends React.Component<IMainProps, {}> {
@@ -133,6 +136,9 @@ export default class Pixi extends React.Component<IMainProps, {}> {
   measures: Measure[] = [];
 
   prev: number = 0;
+
+  connectTargetNote: Note | null = null;
+
   /**
    * canvas を再描画する
    */
@@ -468,6 +474,8 @@ export default class Pixi extends React.Component<IMainProps, {}> {
       // note.type;
     };
 
+    const getNoteLineRenderer = (noteLine: NoteLine) => NoteLineRenderer;
+
     // ノート描画
     for (const note of chart.timeline.notes) {
       /*
@@ -483,6 +491,15 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         graphics,
         chart.timeline.lanes.find(lane => lane.guid === note.lane)!,
         this.measures[note.measureIndex]
+      );
+    }
+
+    // ノートライン描画
+    for (const noteLine of chart.timeline.noteLines) {
+      getNoteLineRenderer(noteLine).render(
+        noteLine,
+        graphics,
+        chart.timeline.notes
       );
     }
 
@@ -566,11 +583,18 @@ export default class Pixi extends React.Component<IMainProps, {}> {
           // 接続テスト
           console.log("接続テスト");
 
+          let ps = chart.timeline.lanePoints
+            .map(lp => ({
+              lp,
+              t: lp.measureIndex + lp.measurePosition.to01Number()
+            }))
+            .sort((a, b) => a.t - b.t);
+
           chart.timeline.setLanes([
             {
               guid: guid(),
               division: 3,
-              points: chart.timeline.lanePoints.map(p => p.guid)
+              points: ps.map(p => p.lp.guid)
             } as Lane
           ]);
 
@@ -581,9 +605,8 @@ export default class Pixi extends React.Component<IMainProps, {}> {
       }
     }
 
-    // 接続モード
+    // ノート選択
     if (
-      // isClick &&
       setting.editMode === EditMode.Select &&
       setting.editObjectCategory === ObjectCategory.Note
     ) {
@@ -600,6 +623,57 @@ export default class Pixi extends React.Component<IMainProps, {}> {
             .beginFill(0x0099ff, 0.3)
             .drawRect(bounds.x, bounds.y, bounds.width, bounds.height)
             .endFill();
+          if (isClick) {
+            console.log(note);
+          }
+        }
+      }
+    }
+
+    // ノート接続
+    if (
+      setting.editMode === EditMode.Connect &&
+      setting.editObjectCategory === ObjectCategory.Note
+    ) {
+      for (const note of chart.timeline.notes) {
+        const bounds = getNoteRenderer(note)!.getBounds(
+          note,
+          getLane(note),
+          getMeasure(note)
+        );
+
+        if (bounds.contains(mousePosition.x - graphics.x, mousePosition.y)) {
+          graphics
+            .lineStyle(0)
+            .beginFill(0x0099ff, 0.3)
+            .drawRect(bounds.x, bounds.y, bounds.width, bounds.height)
+            .endFill();
+
+          if (this.connectTargetNote) {
+            const newNoteLine: NoteLine = {
+              head: this.connectTargetNote.guid,
+              tail: note.guid
+            };
+
+            // ノートラインプレビュー
+            getNoteLineRenderer(newNoteLine).render(
+              newNoteLine,
+              graphics,
+              chart.timeline.notes
+            );
+
+            if (isClick) {
+              chart.timeline.addNoteLine(newNoteLine);
+              console.log("接続 2");
+
+              this.connectTargetNote = note;
+            }
+          } else {
+            if (isClick) {
+              this.connectTargetNote = note;
+              console.log("接続 1");
+            }
+          }
         }
       }
     }

@@ -52,6 +52,10 @@ export default class Chart implements IStore {
       this.timeline.addNote(note);
     }
 
+    for (const noteLine of chart.timeline.noteLines) {
+      this.timeline.addNoteLine(noteLine);
+    }
+
     for (const lane of chart.timeline.lanes) {
       /*
       lane.measurePosition = new Fraction(

@@ -8,6 +8,10 @@ export class Fraction {
   to01Number = () => (1 / this.denominator) * this.numerator;
 
   toMathjs = () => math.fraction(this.numerator, this.denominator);
+
+  clone() {
+    return new Fraction(this.numerator, this.denominator);
+  }
 }
 
 export { default as Vector2 } from "./math/Vector2";

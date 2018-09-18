@@ -44,7 +44,7 @@ export class LanePointRenderer extends PIXI.Sprite {
         bpm.measurePosition!.numerator;
 
     graphics
-      .lineStyle(4, this.target.color)
+      .lineStyle(4, 0xffffff, 0.5)
       .moveTo(x, y)
       .lineTo(x + w, y);
 

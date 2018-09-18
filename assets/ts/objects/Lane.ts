@@ -37,7 +37,7 @@ interface LineInfo {
   end: LinePointInfo;
 }
 
-function getLines(points: LinePoint[], measures: Measure[]): LineInfo[] {
+export function getLines(points: LinePoint[], measures: Measure[]): LineInfo[] {
   const lines: LineInfo[] = [];
 
   const line = (
@@ -167,6 +167,11 @@ function getLines(points: LinePoint[], measures: Measure[]): LineInfo[] {
       // last 番目の小節に線を引く
       {
         const b = a.pop()!;
+
+        if ((window as any).testtest) {
+          console.log("last", b);
+        }
+
         const measure = measures[b.measureIndex];
 
         const x1 =
