@@ -588,7 +588,39 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         ) {
           // console.log("接続！", lanePoint);
 
+          const laneTemplate = chart.musicGameSystem!.laneTemplates.find(
+            lt => lt.name === lanePoint.templateName
+          )!;
+
+          // レーン接続プレビュー
+          if (
+            this.connectTargetLanePoint &&
+            // 同じレーンポイントではない
+            this.connectTargetLanePoint !== lanePoint &&
+            this.connectTargetLanePoint.templateName === lanePoint.templateName
+          ) {
+            const newLane = {
+              guid: guid(),
+              division: laneTemplate.division,
+              points: [this.connectTargetLanePoint.guid, lanePoint.guid]
+            } as Lane;
+
+            LaneRendererResolver.resolve(newLane).render(
+              newLane,
+              graphics,
+              chart.timeline.lanePoints,
+              this.measures
+            );
+
+            if (isClick) {
+              chart.timeline.addLane(newLane);
+              chart.timeline.optimiseLane();
+            }
+          }
+
           if (isClick) {
+            this.connectTargetLanePoint = lanePoint;
+            /*
             // 接続テスト
             console.log("接続テスト");
 
@@ -610,6 +642,8 @@ export default class Pixi extends React.Component<IMainProps, {}> {
                 points: ps.map(p => p.lp.guid)
               } as Lane
             ]);
+
+            */
           }
         }
       }

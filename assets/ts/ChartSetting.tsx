@@ -155,6 +155,13 @@ class ChartSetting extends React.Component<Props, {}> {
         >
           保存
         </Button>
+        <Button
+          onClick={() => {
+            editor.currentChart!.timeline.optimiseLane();
+          }}
+        >
+          最適化
+        </Button>
       </div>
     );
   }

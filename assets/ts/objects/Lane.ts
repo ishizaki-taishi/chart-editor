@@ -13,8 +13,6 @@ export default class Lane extends TimelineObject {
   division: number = 3;
 }
 
-import { Line, lineIntersect } from "../shapes/Line";
-
 import { Fraction, Vector2 } from "../math";
 
 export interface LinePointInfo {
