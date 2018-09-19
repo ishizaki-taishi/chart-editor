@@ -7,6 +7,8 @@ import { GUID } from "../util";
 export default class Lane extends TimelineObject {
   points: GUID[] = [];
 
+  templateName: string = "";
+
   /**
    * 分割数
    */

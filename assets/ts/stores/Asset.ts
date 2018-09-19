@@ -27,6 +27,7 @@ function parseJSON(text: string) {
 interface IStore {}
 
 import MusicGameSystem from "./MusicGameSystem";
+import { render } from "react-dom";
 
 export default class Asset implements IStore {
   @observable
@@ -61,23 +62,60 @@ export default class Asset implements IStore {
 
     // MusicGameSystem を読み込む
     {
-      const files: any[] = await util.promisify(fs.readdir)(urlParams.mgsp);
-      console.log(files);
-
-      var fileList = files.filter(file => file.endsWith(".json"));
-      console.log(fileList);
-      for (const file of fileList) {
-        const buffer: Buffer = await util.promisify(fs.readFile)(
-          urlParams.mgsp + "/" + file
-        );
-
-        const json = parseJSON(buffer.toString());
-
-        this.addMusicGameSystem(json as MusicGameSystem);
-      }
-      Editor.instance!.currentChart!.setMusicGameSystem(
-        this.musicGameSystems.find(mgs => mgs.name === "ongeki")!
+      const directories: any[] = await util.promisify(fs.readdir)(
+        urlParams.mgsp
       );
+
+      for (const directory of directories) {
+        console.log(directory);
+
+        const files = (await util.promisify(fs.readdir)(
+          urlParams.mgsp + "/" + directory
+        )) as any[];
+
+        var fileList = files.filter(file => file.endsWith(".json"));
+        console.log(fileList);
+        for (const file of fileList) {
+          const buffer: Buffer = await util.promisify(fs.readFile)(
+            urlParams.mgsp + "/" + directory + "/" + file
+          );
+
+          const json = parseJSON(buffer.toString());
+
+          const musicGameSystems: MusicGameSystem = json;
+
+          // カスタムレンダラーを読み込む
+          const renderers = [
+            ...new Set(
+              (musicGameSystems.laneTemplates || [])
+                .map(lt => ({ renderer: lt.renderer, lanteTemplate: lt }))
+                .filter(r => r.renderer !== "default")
+            )
+          ];
+
+          for (const renderer of renderers) {
+            const path =
+              urlParams.mgsp + "/" + directory + "/" + renderer.renderer;
+
+            const buffer: Buffer = await util.promisify(fs.readFile)(path);
+
+            const source = buffer
+              .toString()
+              .replace("export default", `window["${path}"] = `);
+
+            console.log(source);
+
+            eval(source);
+
+            renderer.lanteTemplate.rendererReference = (window as any)[path];
+          }
+
+          this.addMusicGameSystem(musicGameSystems);
+        }
+        Editor.instance!.currentChart!.setMusicGameSystem(
+          this.musicGameSystems.find(mgs => mgs.name === "ongeki")!
+        );
+      }
     }
 
     if (localStorage.getItem("chart")) {

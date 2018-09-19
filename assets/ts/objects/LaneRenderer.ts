@@ -202,7 +202,24 @@ export function getLines(points: LinePoint[], measures: Measure[]): LineInfo[] {
 
 const linesCache = new WeakMap<Lane, LineInfo[]>();
 
-class LaneRenderer {
+export interface ILaneRenderer {
+  getQuad(
+    lane: Lane,
+    measure: Measure,
+    horizontal: Fraction,
+    vertical: Fraction
+  ): LinePointInfo | null;
+  render(
+    lane: Lane,
+    graphics: PIXI.Graphics,
+    lanePoints: LanePoint[],
+    measures: Measure[],
+    drawHorizontalLineTargetMeasure?: Measure,
+    md?: number
+  ): QuadAndIndex[];
+}
+
+class LaneRenderer implements ILaneRenderer {
   /*
     get laneDivision() {
       return this.target.division;

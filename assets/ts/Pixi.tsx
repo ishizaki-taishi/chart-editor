@@ -601,6 +601,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
           ) {
             const newLane = {
               guid: guid(),
+              templateName: laneTemplate.name,
               division: laneTemplate.division,
               points: [this.connectTargetLanePoint.guid, lanePoint.guid]
             } as Lane;
