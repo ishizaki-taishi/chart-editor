@@ -103,34 +103,46 @@ export default class Pixi extends React.Component<IMainProps, {}> {
 
   static instance?: Pixi;
 
+  private tempTextIndex = 0;
+
   drawTempText(
     text: string,
     x: number,
     y: number,
     option?: PIXI.TextStyleOptions
   ) {
-    const t = new PIXI.Text(
-      text,
-      Object.assign(
-        {
-          fontSize: 20,
-          fill: 0xffffff,
-          dropShadow: true,
-          dropShadowBlur: 8,
-          dropShadowColor: "#000000",
-          dropShadowDistance: 0
-        },
-        option
-      )
-    );
+    if (!(this.tempTextIndex < this.temporaryTexts.length)) {
+      const t = new PIXI.Text(
+        "",
+        Object.assign(
+          {
+            fontSize: 20,
+            fill: 0xffffff,
+            dropShadow: true,
+            dropShadowBlur: 8,
+            dropShadowColor: "#000000",
+            dropShadowDistance: 0
+          },
+          option
+        )
+      );
+
+      t.anchor.x = 0.5;
+      t.anchor.y = 0.5;
+
+      this.graphics!.addChild(t);
+      this.temporaryTexts.push(t);
+    }
+
+    const t = this.temporaryTexts[this.tempTextIndex];
     t.x = x;
     t.y = y;
 
-    t.anchor.x = 0.5;
-    t.anchor.y = 0.5;
+    t.visible = true;
 
-    this.graphics!.addChild(t);
-    this.temporaryTexts.push(t);
+    t.text = text;
+
+    ++this.tempTextIndex;
   }
 
   measures: Measure[] = [];
@@ -150,8 +162,9 @@ export default class Pixi extends React.Component<IMainProps, {}> {
     Pixi.debugGraphics = graphics;
 
     // 一時テキストを削除
-    for (const temp of this.temporaryTexts) graphics.removeChild(temp);
-    this.temporaryTexts = [];
+    for (const temp of this.temporaryTexts) temp.visible = false;
+    this.tempTextIndex = 0;
+    // this.temporaryTexts = [];
 
     const editor = this.props.editor!;
     const chart = editor.currentChart!;
@@ -519,7 +532,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         ),
         measureIndex: this.measures.findIndex(_ => _ === targetMeasure)!,
         measurePosition: new Fraction(
-          targetLaneVerticalIndex!,
+          setting.measureDivision - 1 - targetLaneVerticalIndex!,
           setting.measureDivision
         ),
         color: 0xffffff,

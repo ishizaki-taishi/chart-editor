@@ -37,8 +37,12 @@ interface LineInfo {
   end: LinePointInfo;
 }
 
+import { sortMeasure } from "../objects/Measure";
+
 export function getLines(points: LinePoint[], measures: Measure[]): LineInfo[] {
   const lines: LineInfo[] = [];
+
+  points = points.slice().sort(sortMeasure);
 
   const line = (
     x1: number,
@@ -250,15 +254,15 @@ export class LaneRenderer extends PIXI.Sprite {
     // {
     //for (var i = 0; i < 1; ++i) {
     const y =
-      measure!.y +
-      (measure!.height / vertical.denominator) * (vertical.numerator + 1);
+      measure.y +
+      measure.height -
+      (measure.height / vertical.denominator) * vertical.numerator;
 
     const measureLine: Line = {
       start: new Vector2(measure!.x, y),
       end: new Vector2(measure!.x + measure!.width, y)
     };
 
-    const yLines = measureLine;
     //}
     // }
 
@@ -303,13 +307,14 @@ export class LaneRenderer extends PIXI.Sprite {
       const xll1 = xLine1;
       const xll2 = xLine2;
 
-      var ret1 = lineIntersect(xll1, yLines);
-      var ret2 = lineIntersect(xll2, yLines);
-      /*
+      var ret1 = lineIntersect(xll1, measureLine);
+      var ret2 = lineIntersect(xll2, measureLine);
 
-      Pixi.debugGraphics!.lineStyle(8, 0xffffff, 0.2)
-        .moveTo(yLines.start.x, yLines.start.y)
-        .lineTo(yLines.end.x, yLines.end.y);
+      /*
+      Pixi.debugGraphics!.lineStyle(8, 0xff00ff, 0.2)
+        .moveTo(measureLine.start.x, measureLine.start.y)
+        .lineTo(measureLine.end.x, measureLine.end.y);
+      /*
 
       Pixi.debugGraphics!.lineStyle(8, 0xffffff, 0.2)
         .moveTo(yLines[1].start.x, yLines[1].start.y)

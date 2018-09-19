@@ -12,6 +12,10 @@ export class Fraction {
   clone() {
     return new Fraction(this.numerator, this.denominator);
   }
+
+  toString() {
+    return this.numerator + "/" + this.denominator;
+  }
 }
 
 export { default as Vector2 } from "./math/Vector2";

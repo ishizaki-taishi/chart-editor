@@ -5,6 +5,7 @@ import Lane from "./Lane";
 import { sortQuadPoint, sortQuadPointFromQuad } from "../utils/drawQuad";
 import Measure from "./Measure";
 import Note from "./Note";
+import Pixi from "../Pixi";
 
 interface INoteRenderer {
   getBounds(note: Note, lane: Lane, measure: Measure): PIXI.Rectangle;
@@ -40,23 +41,24 @@ class NoteRenderer implements INoteRenderer {
       note.measurePosition
     );
 
-    /*
-      const quads = lane.renderer!.quadCache.filter(
-        quad =>
-          quad.horizontalIndex === this.target.horizontalPosition.numerator &&
-          quad.verticalIndex === this.target.measurePosition.numerator
-      );
-      */
-
-    const quads = q;
-
-    if (q) {
-      //.length) {
-      graphics
-        .lineStyle(4, note.color)
-        .moveTo(q.point.x - q.width / 2, q.point.y)
-        .lineTo(q.point.x + q.width / 2, q.point.y);
+    if (!q) {
+      return console.error("ノートの描画範囲が計算できません");
     }
+
+    Pixi.instance!.drawTempText(
+      `${note.measureIndex}:${note.measurePosition}`,
+      q.point.x,
+      q.point.y,
+      {
+        fontSize: 12
+      }
+    );
+
+    graphics
+      // .lineStyle(4, note.color)
+      .lineStyle(6, 0xff0000)
+      .moveTo(q.point.x - q.width / 2, q.point.y)
+      .lineTo(q.point.x + q.width / 2, q.point.y);
   }
 }
 

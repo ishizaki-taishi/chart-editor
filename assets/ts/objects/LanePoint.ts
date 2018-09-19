@@ -1,7 +1,7 @@
 import { Fraction } from "../math";
 import TimelineObject from "./TimelineObject";
-
 import { LaneTemplate } from "../stores/MusicGameSystem";
+import Pixi from "../Pixi";
 
 /**
  * レーンの中間点
@@ -54,5 +54,14 @@ export class LanePointRenderer extends PIXI.Sprite {
     this.height = colliderH;
     this.x = x;
     this.y = y - colliderH / 2;
+
+    Pixi.instance!.drawTempText(
+      `${bpm.measureIndex}:${bpm.measurePosition}`,
+      this.x,
+      this.y,
+      {
+        fontSize: 16
+      }
+    );
   }
 }

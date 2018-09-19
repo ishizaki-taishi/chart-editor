@@ -47,14 +47,14 @@ export default class EditorSetting {
   setEditLaneTypeIndex = (value: number) => (this.editLaneTypeIndex = value);
 
   @observable
-  laneWidth = 200;
+  laneWidth = 400;
 
   @action
   setLaneWidth(newLaneWidth: number) {
     this.laneWidth = newLaneWidth;
   }
   @observable
-  verticalLaneCount = 3;
+  verticalLaneCount = 2;
 
   @action
   setVerticalLaneCount = (value: number) => (this.verticalLaneCount = value);
