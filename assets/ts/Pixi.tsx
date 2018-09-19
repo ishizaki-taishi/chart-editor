@@ -8,13 +8,14 @@ interface IMainProps {
 
 import { Fraction } from "./math";
 import { EditMode, ObjectCategory } from "./stores/EditorSetting";
-import LanePoint, { LanePointRenderer } from "./objects/LanePoint";
+import LanePoint from "./objects/LanePoint";
+import LanePointRenderer from "./objects/LanePointRenderer";
 
 import * as PIXI from "pixi.js";
 
 import { observer, inject } from "mobx-react";
 
-import Lane, { LaneRenderer } from "./objects/Lane";
+import Lane from "./objects/Lane";
 import Note from "./objects/Note";
 import NoteRenderer from "./objects/NoteRenderer";
 
@@ -27,6 +28,7 @@ import Vector2 from "./math/Vector2";
 
 import NoteLine from "./objects/NoteLine";
 import NoteLineRenderer from "./objects/NoteLineRenderer";
+import LaneRendererResolver from "./objects/LaneRendererResolver";
 
 @inject("editor")
 @observer
@@ -150,6 +152,7 @@ export default class Pixi extends React.Component<IMainProps, {}> {
   prev: number = 0;
 
   connectTargetNote: Note | null = null;
+  connectTargetLanePoint: LanePoint | null = null;
 
   /**
    * canvas を再描画する
@@ -353,6 +356,26 @@ export default class Pixi extends React.Component<IMainProps, {}> {
       measure.containsPoint(mousePosition)
     );
 
+    const getLane = (note: Note) => {
+      return chart.timeline.lanes.find(lane => lane.guid === note.lane)!;
+    };
+    const getMeasure = (note: Note) => this.measures[note.measureIndex];
+
+    const getNoteRenderer = (note: Note) => {
+      const noteType = chart.musicGameSystem!.noteTypes.find(
+        noteType => noteType.name === note.type
+      )!;
+
+      if (noteType.renderer === "default") {
+        return NoteRenderer;
+      }
+
+      // note.type;
+    };
+
+    const getNoteLineRenderer = (noteLine: NoteLine) => NoteLineRenderer;
+    const getLanePointRenderer = (lanePoint: LanePoint) => LanePointRenderer;
+
     // 小節の分割線を描画
 
     if (targetMeasure) {
@@ -411,16 +434,10 @@ export default class Pixi extends React.Component<IMainProps, {}> {
     }
 
     // レーン中間点描画
-    for (const bpm of chart.timeline.lanePoints) {
-      if (!bpm.renderer) continue;
+    for (const lanePoint of chart.timeline.lanePoints) {
+      const measure = this.measures[lanePoint.measureIndex];
 
-      const lane = this.measures[bpm.measureIndex];
-
-      if (!bpm.renderer!.parent) {
-        graphics.addChild(bpm.renderer!);
-      }
-
-      bpm.renderer.update(graphics, lane);
+      getLanePointRenderer(lanePoint).render(lanePoint, graphics, measure);
     }
 
     let targetLane: Lane | null = null;
@@ -429,15 +446,8 @@ export default class Pixi extends React.Component<IMainProps, {}> {
 
     // レーン描画
     for (const lane of chart.timeline.lanes) {
-      if (!lane.renderer) continue;
-
-      // const lane = this.measures[bpm.measureIndex];
-
-      if (!lane.renderer!.parent) {
-        graphics.addChild(lane.renderer!);
-      }
-
-      const quads = lane.renderer.update(
+      const quads = LaneRendererResolver.resolve(lane).render(
+        lane,
         graphics,
         chart.timeline.lanePoints,
         this.measures,
@@ -469,25 +479,6 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         }
       }
     }
-
-    const getLane = (note: Note) => {
-      return chart.timeline.lanes.find(lane => lane.guid === note.lane)!;
-    };
-    const getMeasure = (note: Note) => this.measures[note.measureIndex];
-
-    const getNoteRenderer = (note: Note) => {
-      const noteType = chart.musicGameSystem!.noteTypes.find(
-        noteType => noteType.name === note.type
-      )!;
-
-      if (noteType.renderer === "default") {
-        return NoteRenderer;
-      }
-
-      // note.type;
-    };
-
-    const getNoteLineRenderer = (noteLine: NoteLine) => NoteLineRenderer;
 
     // ノート描画
     for (const note of chart.timeline.notes) {
@@ -584,36 +575,42 @@ export default class Pixi extends React.Component<IMainProps, {}> {
     // 接続モード && レーン編集
     if (
       targetMeasure &&
-      isClick &&
+      // isClick &&
       this.props.editor!.setting!.editMode === EditMode.Connect &&
       this.props.editor!.setting!.editObjectCategory === ObjectCategory.Lane
     ) {
       for (const lanePoint of this.props.editor!.currentChart!.timeline
         .lanePoints) {
-        if (lanePoint.renderer!.containsPoint(mousePosition)) {
+        if (
+          getLanePointRenderer(lanePoint)
+            .getBounds(lanePoint, this.measures[lanePoint.measureIndex])
+            .contains(mousePosition.x, mousePosition.y)
+        ) {
           // console.log("接続！", lanePoint);
 
-          // 接続テスト
-          console.log("接続テスト");
+          if (isClick) {
+            // 接続テスト
+            console.log("接続テスト");
 
-          let ps = chart.timeline.lanePoints
-            .map(lp => ({
-              lp,
-              t: lp.measureIndex + lp.measurePosition.to01Number()
-            }))
-            .sort((a, b) => a.t - b.t);
+            let ps = chart.timeline.lanePoints
+              .map(lp => ({
+                lp,
+                t: lp.measureIndex + lp.measurePosition.to01Number()
+              }))
+              .sort((a, b) => a.t - b.t);
 
-          chart.timeline.setLanes([
-            {
-              guid: guid(),
-              division: 3,
-              points: ps.map(p => p.lp.guid)
-            } as Lane
-          ]);
+            const laneTemplate = chart.musicGameSystem!.laneTemplates.find(
+              lt => lt.name === ps[0].lp.templateName
+            )!;
 
-          chart.timeline.lanes[0].renderer = new LaneRenderer(
-            chart.timeline.lanes[0]
-          );
+            chart.timeline.setLanes([
+              {
+                guid: guid(),
+                division: laneTemplate.division,
+                points: ps.map(p => p.lp.guid)
+              } as Lane
+            ]);
+          }
         }
       }
     }
@@ -698,17 +695,12 @@ export default class Pixi extends React.Component<IMainProps, {}> {
       this.props.editor!.setting!.editObjectCategory === ObjectCategory.Lane
     ) {
       // レーンテンプレ
-      const laneT = editor.currentChart!.musicGameSystem!.laneTemplates[
+      const laneTemplate = editor.currentChart!.musicGameSystem!.laneTemplates[
         editor.setting!.editLaneTypeIndex
       ];
 
       const [nx, ny] = normalizeContainsPoint(targetMeasure, mousePosition);
-      /*
-      targetMeasure.worldTransform.applyInverse(mousePosition, tempPoint);
 
-      const nx = (tempPoint.x - targetMeasure.x) / targetMeasure.width;
-      const ny = (tempPoint.y - targetMeasure.y) / targetMeasure.height;
-*/
       const hlDiv = this.props.editor!.currentChart!.timeline
         .horizontalLaneDivision;
 
@@ -728,8 +720,9 @@ export default class Pixi extends React.Component<IMainProps, {}> {
           vlDiv
         ),
         guid: guid(),
-        color: Number(laneT.color),
+        color: Number(laneTemplate.color),
         horizontalSize: editor.setting!.objectSize,
+        templateName: laneTemplate.name,
         horizontalPosition: new Fraction(
           clamp(
             Math.floor((nx - p) * hlDiv),
@@ -740,20 +733,18 @@ export default class Pixi extends React.Component<IMainProps, {}> {
         )
       } as LanePoint;
 
-      newLanePoint.renderer = new LanePointRenderer(newLanePoint);
-
       //lane.renderer.update(graphics, this.measures);
 
       if (isClick) {
         this.props.editor!.currentChart!.timeline.addLanePoint(newLanePoint);
       } else {
         // プレビュー
-        graphics.addChild(newLanePoint.renderer!);
-        newLanePoint.renderer.update(
+
+        getLanePointRenderer(newLanePoint).render(
+          newLanePoint,
           graphics,
           this.measures[newLanePoint.measureIndex]
         );
-        graphics.removeChild(newLanePoint.renderer!);
       }
     }
   }

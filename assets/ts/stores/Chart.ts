@@ -12,8 +12,8 @@ interface IStore {}
 
 import Timeline from "../objects/Timeline";
 import BPMChange, { BPMRenderer } from "../objects/BPMChange";
-import LanePoint, { LanePointRenderer } from "../objects/LanePoint";
-import { LaneRenderer } from "../objects/Lane";
+import LanePointRenderer from "../objects/LanePoint";
+
 import NoteRenderer from "../objects/NoteRenderer";
 
 export default class Chart implements IStore {
@@ -34,7 +34,6 @@ export default class Chart implements IStore {
         lanePoint.horizontalPosition.denominator
       );
 
-      lanePoint.renderer = new LanePointRenderer(lanePoint);
       this.timeline.addLanePoint(lanePoint);
     }
 
@@ -68,7 +67,6 @@ export default class Chart implements IStore {
         lane.horizontalPosition.denominator
       );
       */
-      lane.renderer = new LaneRenderer(lane);
     }
     this.timeline.setLanes(chart.timeline.lanes);
   }
@@ -278,12 +276,7 @@ export default class Chart implements IStore {
     tl.notes = chart.timeline.notes.map(t => Object.assign({}, t));
 
     for (const e of tl.bpmChanges) delete e.renderer;
-    for (const e of tl.lanePoints) delete e.renderer;
     // for (const e of tl.notes) delete e.renderer;
-    for (const e of tl.lanes) {
-      delete e.renderer;
-      // e.points = []; //e.pointsIndex = e.points.map(point => point.);
-    }
 
     delete chart.time;
     //delete chart.timeline;

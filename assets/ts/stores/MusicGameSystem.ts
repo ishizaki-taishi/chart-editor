@@ -1,6 +1,7 @@
 export interface LaneTemplate {
   name: string;
   color: string;
+  division: number;
 }
 
 interface MusicGameSystem {

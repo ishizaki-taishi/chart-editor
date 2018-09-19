@@ -41,4 +41,7 @@ export default class Timeline {
 
   @action
   setLanes = (lanes: Lane[]) => (this.lanes = lanes);
+
+  @action
+  addLane = (lane: Lane) => this.lanes.push(lane);
 }

@@ -1,4 +1,4 @@
-import { Fraction } from "../math";
+import { Fraction, Vector2 } from "../math";
 import TimelineObject from "./TimelineObject";
 import { GUID, guid } from "../util";
 import Lane from "./Lane";
@@ -6,6 +6,8 @@ import { sortQuadPoint, sortQuadPointFromQuad } from "../utils/drawQuad";
 import Measure from "./Measure";
 import Note from "./Note";
 import Pixi from "../Pixi";
+
+import LaneRendererResolver from "./LaneRendererResolver";
 
 interface INoteRenderer {
   getBounds(note: Note, lane: Lane, measure: Measure): PIXI.Rectangle;
@@ -20,7 +22,8 @@ interface INoteRenderer {
 
 class NoteRenderer implements INoteRenderer {
   getBounds(note: Note, lane: Lane, measure: Measure): PIXI.Rectangle {
-    const q = lane.renderer!.getQuad(
+    const q = LaneRendererResolver.resolve(lane).getQuad(
+      lane,
       measure,
       note.horizontalPosition,
       note.measurePosition
@@ -35,7 +38,8 @@ class NoteRenderer implements INoteRenderer {
   }
 
   render(note: Note, graphics: PIXI.Graphics, lane: Lane, measure: Measure) {
-    const q = lane.renderer!.getQuad(
+    const q = LaneRendererResolver.resolve(lane).getQuad(
+      lane,
       measure,
       note.horizontalPosition,
       note.measurePosition

@@ -17,7 +17,7 @@ interface INoteLineRenderer {
   render(noteLine: NoteLine, graphics: PIXI.Graphics, notes: Note[]): void;
 }
 
-import { getLines } from "./Lane";
+import { getLines } from "./LaneRenderer";
 import LanePoint from "./LanePoint";
 import Vector2 from "../math/Vector2";
 
