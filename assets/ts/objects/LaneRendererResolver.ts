@@ -12,11 +12,12 @@ export default class LaneRendererResolver {
     if (laneTemplate.name === "default") return LaneRenderer;
 
     if (laneTemplate.rendererReference) {
-      console.log(laneTemplate.rendererReference);
+      //  console.log(laneTemplate.rendererReference);
 
       return {
         getQuad: LaneRenderer.getQuad,
-        render: laneTemplate.rendererReference as any
+        defaultRender: laneTemplate.rendererReference as any,
+        render: LaneRenderer.render
       };
     } else return LaneRenderer;
   }

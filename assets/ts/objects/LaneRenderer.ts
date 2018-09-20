@@ -11,6 +11,7 @@ import { sortMeasure } from "../objects/Measure";
 import Pixi from "../Pixi";
 
 import { Quad } from "../shapes/Quad";
+import { LaneTemplate } from "../stores/MusicGameSystem";
 
 interface LinePoint {
   measureIndex: number;
@@ -217,6 +218,12 @@ export interface ILaneRenderer {
     drawHorizontalLineTargetMeasure?: Measure,
     md?: number
   ): QuadAndIndex[];
+
+  defaultRender(
+    graphics: PIXI.Graphics,
+    lines: LineInfo[],
+    laneTemplate: LaneTemplate
+  ): void;
 }
 
 class LaneRenderer implements ILaneRenderer {
@@ -227,6 +234,23 @@ class LaneRenderer implements ILaneRenderer {
   
     quadCache: QuadAndIndex[] = [];
     */
+
+  defaultRender(
+    graphics: PIXI.Graphics,
+    lines: LineInfo[],
+    laneTemplate: LaneTemplate
+  ) {
+    for (const line of lines) {
+      graphics
+        .lineStyle(1, Number(laneTemplate.color))
+        .moveTo(line.start.point.x - line.start.width / 2, line.start.point.y)
+        .lineTo(line.end.point.x - line.end.width / 2, line.end.point.y);
+      graphics
+        .lineStyle(1, Number(laneTemplate.color))
+        .moveTo(line.start.point.x + line.start.width / 2, line.start.point.y)
+        .lineTo(line.end.point.x + line.end.width / 2, line.end.point.y);
+    }
+  }
 
   getQuad(
     lane: Lane,
@@ -344,6 +368,8 @@ class LaneRenderer implements ILaneRenderer {
 
   // private linesCache: LineInfo[] = [];
 
+  customRender(render: any) {}
+
   render(
     lane: Lane,
     graphics: PIXI.Graphics,
@@ -362,16 +388,11 @@ class LaneRenderer implements ILaneRenderer {
     // キャッシュしておく
     linesCache.set(lane, lines);
 
-    for (const line of lines) {
-      graphics
-        .lineStyle(1, 0xffffff)
-        .moveTo(line.start.point.x - line.start.width / 2, line.start.point.y)
-        .lineTo(line.end.point.x - line.end.width / 2, line.end.point.y);
-      graphics
-        .lineStyle(1, 0xffffff)
-        .moveTo(line.start.point.x + line.start.width / 2, line.start.point.y)
-        .lineTo(line.end.point.x + line.end.width / 2, line.end.point.y);
-    }
+    const laneTemplate = Pixi.instance!.props.editor!.currentChart!.musicGameSystem!.laneTemplates.find(
+      lt => lt.name === lane.templateName
+    )!;
+
+    this.defaultRender(graphics, lines, laneTemplate);
 
     // 選択中の小節に乗っているレーン
     const targetMeasureLines = lines.filter(
